@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>스마트위브</title>
-<meta name="description" content="스마트위브 — 자산배분 리밸런서와 AI 스토리 대화 앱 AI Buddy를 만듭니다.">
+<meta name="description" content="스마트위브 — 자산배분 리밸런서, AI 스토리 대화 앱 AI Buddy, AI 에이전트 기억 장치를 만듭니다.">
 <meta property="og:title" content="스마트위브">
 <meta property="og:description" content="자산배분 리밸런서와 AI 스토리 대화 앱 AI Buddy를 만드는 회사.">
 <link rel="icon" href="logo.png" type="image/png">
@@ -76,6 +76,7 @@
   }
   .section-tag { font-size: .75rem; letter-spacing: .14em; color: var(--muted); font-weight: 500; margin: 0 0 14px; }
   .apps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .apps .wide { grid-column: 1 / -1; }
   @media (max-width: 680px) { .apps { grid-template-columns: 1fr; } }
   .app .note { font-size: .78rem; }
   .app .tag { font-size: .75rem; letter-spacing: .14em; color: var(--thread); font-weight: 500; }
@@ -146,6 +147,15 @@
         <div class="row">
           <span class="btn soon" aria-disabled="true">준비 중</span>
           <span class="age">만 19세 이상 이용 가능</span>
+        </div>
+      </section>
+      <section class="app wide" aria-labelledby="md-title">
+        <span class="tag">AI 에이전트 기억</span>
+        <h2 id="md-title">Memory Device</h2>
+        <p>AI 에이전트는 사람보다 빨리 생각하지만, 대화가 끝나면 전부 잊어버립니다. Memory Device는 그 빈자리를 채웁니다 — 어제 정한 것, 지난주에 한 약속, 다시 묻지 않아도 될 것까지. <b>한 번 말하면, 평생 기억합니다.</b></p>
+        <p class="note">쓰던 에이전트에 그대로 붙이세요 — 연결은 5분이면 끝납니다.</p>
+        <div class="row">
+          <span class="btn soon" aria-disabled="true">준비 중</span>
         </div>
       </section>
     </div>
