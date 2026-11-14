@@ -81,6 +81,8 @@
   .app .note { font-size: .78rem; }
   .app .tag { font-size: .75rem; letter-spacing: .14em; color: var(--thread); font-weight: 500; }
   .app h2 { font-family: var(--serif); font-size: 1.6rem; margin: 0; }
+  .app h2.with-mark { display: flex; align-items: center; gap: 12px; }
+  .app h2 .mark { flex: 0 0 auto; border-radius: 10px; box-shadow: 0 6px 16px -8px rgba(61, 63, 140, .55); }
   .app p { margin: 0; color: var(--muted); }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 6px; }
   .btn {
@@ -133,7 +135,7 @@
     <div class="apps">
       <section class="app wide" aria-labelledby="md-title">
         <span class="tag">AI 에이전트 기억</span>
-        <h2 id="md-title">Memory Device</h2>
+        <h2 id="md-title" class="with-mark"><svg class="mark" aria-hidden="true" width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d3f8c"/><stop offset="1" stop-color="#6b54b0"/></linearGradient><radialGradient id="mdh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="64" height="64" rx="14" fill="url(#mdg)"/><circle cx="32" cy="32" r="22" fill="url(#mdh)"/><path d="M32 32c6-2 9 4 5 9s-14 4-17-3 3-17 13-18 19 6 18 15" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round"/><circle cx="32" cy="32" r="4.6" fill="#fff"/><circle cx="41.5" cy="41" r="2.6" fill="#fff"/><circle cx="20.5" cy="38.5" r="2.2" fill="#fff" fill-opacity=".9"/><circle cx="33" cy="15" r="1.9" fill="#fff" fill-opacity=".85"/><circle cx="51" cy="29" r="1.6" fill="#fff" fill-opacity=".75"/></svg><span>Memory Device</span></h2>
         <p>AI 에이전트는 사람보다 빨리 생각하지만, 대화가 끝나면 전부 잊어버립니다. Memory Device는 그 빈자리를 채웁니다 — 어제 정한 것, 지난주에 한 약속, 다시 묻지 않아도 될 것까지. <b>한 번 말하면, 평생 기억합니다.</b></p>
         <p class="note">쓰던 에이전트에 그대로 붙이세요 — 연결은 5분이면 끝납니다.</p>
         <div class="row">
