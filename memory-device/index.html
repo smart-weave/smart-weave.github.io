@@ -1041,7 +1041,8 @@
   }
   let lastDraw = 0;
   function step(now) { const u = Math.min(1, (now - t0) / DUR), e = ease(u);
-    if (u < 1 && now - lastDraw < 31) { raf = requestAnimationFrame(step); return; } lastDraw = now; // 30 fps while moving (CPU) const ls = Math.log(from.span) + (Math.log(to.span) - Math.log(from.span)) * e;
+    if (u < 1 && now - lastDraw < 31) { raf = requestAnimationFrame(step); return; } lastDraw = now; // 30 fps while moving (CPU)
+    const ls = Math.log(from.span) + (Math.log(to.span) - Math.log(from.span)) * e;
     cur = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, span: Math.exp(ls) }; draw(); if (u < 1) raf = requestAnimationFrame(step); }
   document.querySelectorAll(".tskyctl [data-v]").forEach(b => b.addEventListener("click", () => go(b.dataset.v, true)));
   const tick = () => { if (!touched && onScreen && !document.hidden) go(ORDER[(ORDER.indexOf(view) + 1) % 3], false); };
