@@ -281,6 +281,34 @@
   .heroctl{position:absolute;right:var(--gut);bottom:20px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:2}
   .hero .live{margin:0;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);text-align:right;max-width:none;white-space:nowrap}
   /* sections */
+  /* 05 · 팀의 하늘 (owner 2026-11-20 18:56 「가까이 중간 멀게만 넣을까? ㅎㅎ」) — view only, three views, docs/ui/sky-v1 cut down. */
+  .tsky{position:relative;margin-top:28px;border-radius:20px;overflow:hidden;background:var(--night-2);border:1px solid var(--glass-line);aspect-ratio:16/9;max-width:100%}
+  .tsky canvas{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity 250ms}
+  .tskyctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+  .tskyctl .seg{display:inline-flex;border:1px solid var(--glass-line);border-radius:999px;overflow:hidden;background:var(--glass)}
+  .tskyctl .seg button{min-height:44px;padding:0 18px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;font-size:14px}
+  .tskyctl .seg button[aria-pressed="true"]{background:rgb(255 255 255 / .12);color:var(--ink);font-weight:600}
+  .tskyctl .note{font-size:13px;color:var(--ink-3)}
+  @media (max-width:640px){.tsky{aspect-ratio:4/5}}
+  /* 06 · 자리끼리 말 건네기 (owner 2026-11-20 18:59) — two machines, one server; only what works today. */
+  .pass{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:0;align-items:center;margin-top:28px}
+  .pass .term pre{min-height:230px;font-size:13px}
+  .pass .mid{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--ink-3);text-align:center}
+  .pass .wire{position:relative;width:100%;height:2px;background:repeating-linear-gradient(90deg,var(--glass-line) 0 6px,transparent 6px 12px)}
+  .pass .dot{position:absolute;top:-4px;left:0;width:10px;height:10px;border-radius:50%;background:var(--color-brand);box-shadow:0 0 12px var(--color-brand);opacity:0}
+  .pass.go .dot{animation:passdot 1.6s var(--ease-out,ease) forwards}
+  @keyframes passdot{0%{left:0;opacity:1}100%{left:calc(100% - 10px);opacity:1}}
+  .pass .srv{border:1px solid var(--glass-line);background:var(--glass);border-radius:12px;padding:6px 8px;color:var(--ink-2)}
+  .pass .fence{display:block;border-left:2px solid var(--color-kind-tentative);padding-left:10px;margin:4px 0;color:#c9cde0}
+  .pass .fence b{color:var(--color-kind-tentative);font-weight:600}
+  .pass [data-st]{transition:opacity 400ms}.pass [data-st].hide{opacity:0}
+  .pass .state{color:var(--color-kind-done)}
+  .passrules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:20px;font-size:14px;color:var(--ink-2)}
+  .passrules b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+  @media (max-width:860px){.pass{grid-template-columns:minmax(0,1fr)}.pass .mid{height:auto;padding:12px 0}.pass .wire{width:2px;height:48px;background:repeating-linear-gradient(180deg,var(--glass-line) 0 6px,transparent 6px 12px)}.pass.go .dot{animation-name:passdotv}.passrules{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+  @keyframes passdotv{0%{top:0;left:-4px;opacity:1}100%{top:38px;left:-4px;opacity:1}}
+  @media (max-width:480px){.passrules{grid-template-columns:minmax(0,1fr)}}
+  @media (prefers-reduced-motion:reduce){.pass .dot{display:none}.pass [data-st]{transition:none}}
   section.s{max-width:var(--wide);margin:0 auto;padding:clamp(72px,12vh,140px) var(--gut) 0}
   .kick{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;color:var(--color-brand);text-transform:uppercase}
   h2{margin:10px 0 0;font-size:clamp(28px,3.6vw,48px);line-height:1.12;letter-spacing:-.03em;font-weight:800;max-width:20ch;text-wrap:balance}
@@ -531,8 +559,42 @@
     </div>
   </section>
 
+  <section class="s" id="teamsky" aria-labelledby="h4s">
+    <span class="kick">05 · 팀의 하늘</span>
+    <h2 id="h4s">자리마다 은하 하나, 팀은 하늘 하나</h2>
+    <p class="lead">한 팀의 에이전트들은 한 하늘을 같이 써요. 자리마다 자기 은하가 있고, 정한 것은 가운데 팀 기억으로 모이고, 자리 사이에는 말이 오가요.</p>
+    <div class="tsky" id="tsky" role="img" aria-label="바다상회의 하늘 — 멀리: 자리 네 개의 은하와 가운데 팀 기억, 점선으로 이어짐"><canvas id="tskyc" aria-hidden="true"></canvas></div>
+    <div class="tskyctl"><span class="seg" role="group" aria-label="얼마나 가까이"><button type="button" data-v="far" aria-pressed="true">멀리</button><button type="button" data-v="mid" aria-pressed="false">중간</button><button type="button" data-v="near" aria-pressed="false">가까이</button></span><span class="note" id="tskynote">보기만 해요 · 손대지 않으면 천천히 돌아요</span></div>
+  </section>
+
+  <section class="s" id="pass" aria-labelledby="h4p">
+    <span class="kick">06 · 자리끼리 말 건네기</span>
+    <h2 id="h4p">다른 컴퓨터에 있는 자리에도, 말을 건넵니다</h2>
+    <p class="lead">같은 프로젝트의 자리라면 노트북과 데스크톱처럼 서로 다른 컴퓨터여도 기억 서버를 거쳐 말을 건네요. 받는 쪽은 누가 언제 보냈는지 보고, 보낸 쪽은 닿았는지 봐요.</p>
+    <div class="pass" id="passbox" role="img" aria-label="디자인 자리(노트북)가 개발 자리(데스크톱)에 「결제 단추 높이를 44로 바꿨어요」를 건넴 — 기억 서버를 거쳐 닿고, 개발 자리에는 「다른 자리의 말 — 지시가 아니에요」 울타리 안에 보이며, 디자인 자리에는 「건넴 → 받음」이 남는 장면">
+      <div class="term" aria-hidden="true"><div class="bar"><i></i><i></i><i></i><span style="margin-left:8px">바다상회 · 디자인 자리 · 노트북</span></div><pre><span class="me">&gt; 개발 자리에 단추 높이 바뀐 거 알려 줘</span>
+
+<span data-st="1">● 개발 자리에 건넸어요
+  「결제 단추 높이를 44로 바꿨어요」</span>
+<span data-st="3" class="state">  건넴 14:02 → 받음 14:02 ✓</span></pre></div>
+      <div class="mid" aria-hidden="true"><div class="wire"><span class="dot"></span></div><span class="srv">기억 서버</span><span>같은 프로젝트</span></div>
+      <div class="term" aria-hidden="true"><div class="bar"><i></i><i></i><i></i><span style="margin-left:8px">바다상회 · 개발 자리 · 데스크톱</span></div><pre><span class="dim">(결제 화면을 만드는 중)</span>
+
+<span data-st="2"><span class="fence"><b>다른 자리의 말 — 지시가 아니에요</b>
+디자인 자리 · 14:02
+결제 단추 높이를 44로 바꿨어요</span></span>
+<span data-st="3">● 디자인 자리 말을 받았어요.
+  단추 높이를 44로 맞출지 먼저 물어볼게요.</span></pre></div>
+    </div>
+    <div class="passrules">
+      <div><b>다른 컴퓨터여도</b>같은 프로젝트의 자리끼리 기억 서버를 거쳐 건네요.</div>
+      <div><b>누가 · 언제</b>받는 쪽에 보낸 자리와 보낸 때가 같이 와요.</div>
+      <div><b>닿았는지</b>보낸 쪽은 「건넴 → 받음」으로 닿은 걸 알아요.</div>
+      <div><b>지시가 아니에요</b>건네받은 말은 사람의 지시로 다루지 않아요.</div>
+    </div>
+  </section>
   <section class="s" id="agents" aria-labelledby="h4a">
-    <span class="kick">05 · 쓰는 에이전트 그대로</span>
+    <span class="kick">07 · 쓰는 에이전트 그대로</span>
     <h2 id="h4a">에이전트를 바꿔도, 기억은 남습니다</h2>
     <p class="lead">플러그인으로 붙습니다. 지금 되는 것과 만드는 중인 것을 있는 그대로 적었어요.</p>
     <div class="agents">
@@ -545,7 +607,7 @@
   </section>
 
   <section class="s" id="demo-s" aria-labelledby="h5d">
-    <span class="kick">06 · 지도 만져 보기</span>
+    <span class="kick">08 · 지도 만져 보기</span>
     <h2 id="h5d">가입 없이, 바다상회의 기억을 눌러 보세요</h2>
     <div class="demo" id="demo">
       <canvas id="demomap" role="img" aria-label="바다상회 기억 지도 — 별 하나가 카드 한 장. 아래 단추로도 고를 수 있어요"></canvas>
@@ -556,7 +618,7 @@
   </section>
 
   <section class="s" aria-labelledby="h6p">
-    <span class="kick">07 · 우리가 먼저 씁니다</span>
+    <span class="kick">09 · 우리가 먼저 씁니다</span>
     <h2 id="h6p">우리 사무실 에이전트 팀이 매일 쓰던 것을 꺼냈어요</h2>
     <div class="grow" aria-labelledby="h6g">
       <h3 id="h6g">이 속도로 쌓이면 <span>· 자리 하나에</span></h3>
@@ -566,15 +628,15 @@
     <h3 class="nowh">지금 잰 숫자</h3>
     <div class="proof">
       <div><div class="v">266<small> / 1,102턴</small></div><div class="l">하루 대화 중 기억이 붙은 턴</div></div>
-      <div><div class="v">1,084<small>장</small></div><div class="l">쌓인 카드</div></div>
+      <div><div class="v">2,238<small>장</small></div><div class="l">쌓인 카드</div></div>
       <div><div class="v">0</div><div class="l">옮겨 심기 대조 차이</div></div>
       <div><div class="v">0</div><div class="l">서버를 내렸다 올려도 잃은 쓰기</div></div>
     </div>
-    <p class="measured">잰 날 2026-11-14 · 잰 곳 우리 사무실. 숫자가 바뀌면 같이 바꿔요.</p>
+    <p class="measured">잰 곳 우리 사무실 · 쌓인 카드 · 잃은 쓰기 2026-11-20 · 대조 차이 2026-11-18 · 붙은 턴 2026-11-14. 숫자가 바뀌면 같이 바꿔요.</p>
   </section>
 
   <section class="s" id="price" aria-labelledby="h7t">
-    <span class="kick">08 · 기억은 당신 것</span>
+    <span class="kick">10 · 기억은 당신 것</span>
     <h2 id="h7t">쌓을수록 값지고, 언제든 가져갈 수 있게</h2>
     <div class="trust">
       <div class="tr"><b>자리마다 격리</b><p>남의 <span class="gloss">자리(에이전트 하나)</span> 원문은 안 보여요. 열어 준 카드만 함께 봐요.</p></div>
@@ -907,6 +969,99 @@
   // (after the first re-bake: resizing a canvas clears it, so the moment is drawn once layout has settled)
   else if (FRAME !== null) setTimeout(() => { let ms = 1; Math.random = () => (ms = (ms * 16807) % 2147483647) / 2147483647; /* reseeded here: other parts of the page draw random numbers on their own timers */ const t0 = performance.now(), T = +FRAME, at = [0, ...(!OPEN_OLD && T > 1400 ? [1400] : []), ...(T > 0 ? [T] : [])]; const real = performance.now.bind(performance); let fake = null; performance.now = () => fake ?? real(); /* send() stamps signals with performance.now(): keep it on the drawn moment */ at.forEach(ms => { fake = t0 + ms; hero.draw(fake); }); document.documentElement.dataset.frameDone = "1"; }, 600);
   else { mReset(); start(); }
+})();
+</script>
+<script>
+// 05 · 팀의 하늘 — view only. Fake 바다상회 seats. Draws only while the camera moves; idle otherwise.
+(() => {
+  const box = document.getElementById("tsky"), cv = document.getElementById("tskyc");
+  if (!box || !cv) return;
+  const ctx = cv.getContext("2d");
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const css = getComputedStyle(document.documentElement);
+  const KC = ["decision", "todo", "fact", "done", "blocker", "tentative"].map(k => css.getPropertyValue("--color-kind-" + k).trim() || "#9aa5ff");
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const G = [
+    { name: "개발 자리", n: 184, x: -1.2, y: -0.4, clouds: ["결제 단추", "환불 흐름", "주문 시험"] },
+    { name: "PM 자리", n: 92, x: 1.15, y: -0.55, clouds: ["이번 주 순서", "출시 날짜"] },
+    { name: "디자인 자리", n: 61, x: 1.05, y: 0.75, clouds: ["단추 크기", "글꼴"] },
+    { name: "운영 자리", n: 48, x: -1.0, y: 0.82, clouds: ["배송 문의", "재고"] },
+  ];
+  const TEAM = { name: "팀 기억", n: 163, x: 0, y: 0, r: 0.2 };
+  const TITLES = ["환불 기한은 14일", "결제 단추 높이 44", "주문 시험은 금요일", "쿠폰은 한 번만", "환불은 카드로 되돌림", "결제 실패 문구 고침"];
+  const stars = [];
+  for (const g of G) {
+    g.r = 0.2 + Math.sqrt(g.n) * 0.022;
+    for (let i = 0; i < Math.min(g.n, 140); i++) {
+      const t = Math.pow(rnd(), 0.7), a = (i % 2) * Math.PI + t * 3.6 + (rnd() - 0.5) * 0.5, rr = t * g.r;
+      stars.push({ g, x: g.x + Math.cos(a) * rr, y: g.y + Math.sin(a) * rr * 0.62, k: Math.floor(rnd() * 6), w: rnd() < 0.12 ? 2 + Math.floor(rnd() * 4) : 0 });
+    }
+  }
+  for (let i = 0; i < 60; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.18; stars.push({ g: TEAM, x: Math.cos(a) * r, y: Math.sin(a) * r * 0.7, k: Math.floor(rnd() * 6), w: 0 }); }
+  const dev = G[0];
+  const nearStars = []; for (const p of stars) { if (p.g !== dev || p.w === 0 || Math.hypot(p.x - dev.x, p.y - dev.y) > dev.r * 0.6) continue; if (nearStars.every(q => Math.hypot(q.x - p.x, q.y - p.y) > dev.r * 0.14)) nearStars.push(p); if (nearStars.length === 6) break; }
+  const nc = nearStars.reduce((a, p) => ({ x: a.x + p.x / nearStars.length, y: a.y + p.y / nearStars.length }), { x: 0, y: 0 });
+  const VIEW = { far: { x: 0, y: 0.15, span: 3.3 }, mid: { x: dev.x, y: dev.y, span: dev.r * 2.6 }, near: { x: nc.x, y: nc.y, span: dev.r * 1.0 } };
+  const ORDER = ["far", "mid", "near"];
+  let cur = { ...VIEW.far }, from = cur, to = cur, t0 = 0, view = "far", W = 0, H = 0, dpr = 1, raf = 0;
+  const DUR = 1400, clamp = v => Math.max(0, Math.min(1, v));
+  const ease = u => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+  const stage = span => { const L = Math.log, f = VIEW.far.span, m = VIEW.mid.span, n = VIEW.near.span, l = L(span); return { far: clamp((l - L(m)) / (L(f) - L(m))), near: clamp((L(m) - l) / (L(m) - L(n))) }; };
+  function size() { const r = box.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); draw(); }
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const s = Math.min(W, H) / cur.span, ox = W / 2 - cur.x * s, oy = H / 2 - cur.y * s, P = (x, y) => [ox + x * s, oy + y * s];
+    const st = stage(cur.span), col = Math.min(1, st.near * 1.6 + 0.12 * (1 - st.far)); // kind colours arrive at 가까이 (sky-v1 3절)
+    if (st.far > 0.01) { ctx.save(); ctx.globalAlpha = 0.45 * st.far; ctx.setLineDash([3, 5]); ctx.strokeStyle = "#8a92a0"; for (const g of G) { const [a, b] = P(0, 0), [c, d] = P(g.x, g.y); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); } ctx.restore(); }
+    for (const g of [...G, TEAM]) { const [x, y] = P(g.x, g.y), R = g.r * s * 1.15; const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, g === TEAM ? "rgba(150,230,222,.28)" : "rgba(230,215,190,.2)"); rg.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill(); }
+    for (const p of stars) { const [x, y] = P(p.x, p.y); if (x < -10 || y < -10 || x > W + 10 || y > H + 10) continue;
+      const r = Math.max(0.7, (1 + col * (0.6 + p.w * 0.5)) * Math.min(3, s / 150));
+      ctx.globalAlpha = 0.55 + 0.45 * col; ctx.fillStyle = col > 0.5 ? KC[p.k] : p.g === TEAM ? "#bfeee8" : "#e6e1d6"; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); }
+    const font = (px, w) => `${w} ${px}px Inter, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif`;
+    const placed = [];
+    const label = (txt, x, y, px, a, w, c = "#eef0f7", align = "center") => { if (a <= 0.02) return; ctx.font = font(px, w); const tw = ctx.measureText(txt).width, lx = align === "left" ? x : x - tw / 2, rect = [lx - 4, y - px * 0.7, lx + tw + 4, y + px * 0.7];
+      if (rect[0] < 6 || rect[2] > W - 6 || rect[1] < 6 || rect[3] > H - 6) return; if (placed.some(r => r[0] < rect[2] && rect[0] < r[2] && r[1] < rect[3] && rect[1] < r[3])) return; placed.push(rect); ctx.globalAlpha = a; ctx.textAlign = align; ctx.textBaseline = "middle"; ctx.font = font(px, w); ctx.lineWidth = Math.max(3, px * 0.18); ctx.strokeStyle = "rgba(5,7,14,.85)"; ctx.strokeText(txt, x, y); ctx.fillStyle = c; ctx.fillText(txt, x, y); };
+    nearStars.forEach((p, i) => { const [x, y] = P(p.x, p.y); label(TITLES[i], x + 9, y, 13, st.near, 600, "#eef0f7", "left"); });
+    const big = Math.max(15, Math.min(26, W / 42));
+    for (const g of G) { const [x, y] = P(g.x, g.y + g.r * 0.85); label(g.name, x, y, big, st.far, 800); label("카드 " + g.n + "장", x, y + big * 0.95, big * 0.55, st.far * 0.85, 500, "#b7bccb"); }
+    { const [x, y] = P(0, -0.27); label("팀 기억", x, y, big * 0.75, st.far, 700, "#96e6de"); }
+    const midA = (1 - st.far) * (1 - st.near * 0.7);
+    for (const g of G) g.clouds.forEach((c, i) => { const a = i * 2.1 + 0.6, r = g.r * (0.35 + 0.25 * i); const [x, y] = P(g.x + Math.cos(a) * r, g.y + Math.sin(a) * r * 0.62); label(c, x, y, 13, midA * (g === dev ? 1 : 0.6), 600, "#d7dbe7"); });
+    { const [x, y] = P(dev.x, dev.y - dev.r * 0.8); label("개발 자리", x, y, 14, midA * (1 - st.near), 700, "#b7bccb"); }
+    ctx.globalAlpha = 1;
+  }
+  const ARIA = { far: "바다상회의 하늘 — 멀리: 자리 네 개의 은하와 가운데 팀 기억, 점선으로 이어짐", mid: "바다상회의 하늘 — 중간: 개발 자리 은하 하나와 구름 이름(결제 단추 · 환불 흐름 · 주문 시험)", near: "바다상회의 하늘 — 가까이: 종류 색 별과 대표 카드 제목(환불 기한은 14일 · 결제 단추 높이 44 …)" };
+  let touched = false, onScreen = false, timer = 0;
+  function go(v, byHand) {
+    if (byHand) { touched = true; clearInterval(timer); }
+    if (v === view) return; view = v; box.setAttribute("aria-label", ARIA[v]);
+    document.querySelectorAll(".tskyctl [data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    if (RM) { cv.style.opacity = "0"; setTimeout(() => { cur = { ...VIEW[v] }; draw(); cv.style.opacity = "1"; }, 250); return; }
+    from = { ...cur }; to = VIEW[v]; t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(step);
+  }
+  let lastDraw = 0;
+  function step(now) { const u = Math.min(1, (now - t0) / DUR), e = ease(u);
+    if (u < 1 && now - lastDraw < 31) { raf = requestAnimationFrame(step); return; } lastDraw = now; // 30 fps while moving (CPU) const ls = Math.log(from.span) + (Math.log(to.span) - Math.log(from.span)) * e;
+    cur = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, span: Math.exp(ls) }; draw(); if (u < 1) raf = requestAnimationFrame(step); }
+  document.querySelectorAll(".tskyctl [data-v]").forEach(b => b.addEventListener("click", () => go(b.dataset.v, true)));
+  const tick = () => { if (!touched && onScreen && !document.hidden) go(ORDER[(ORDER.indexOf(view) + 1) % 3], false); };
+  new IntersectionObserver(es => { onScreen = es.some(e => e.isIntersecting); clearInterval(timer); if (onScreen && !RM && !touched) timer = setInterval(tick, 6000); }, { threshold: 0.35 }).observe(box);
+  if (RM) document.getElementById("tskynote").textContent = "보기만 해요 · 단추로 바꿔 봐요";
+  const q = new URLSearchParams(location.search).get("sky"); if (q && VIEW[q]) { touched = true; view = q; cur = { ...VIEW[q] }; box.setAttribute("aria-label", ARIA[q]); document.querySelectorAll(".tskyctl [data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === q))); }
+  new ResizeObserver(size).observe(box); size();
+})();
+// 06 · 자리끼리 말 건네기 — a short loop while on screen; reduced motion shows the last step still.
+(() => {
+  const box = document.getElementById("passbox"); if (!box) return;
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const parts = [...box.querySelectorAll("[data-st]")];
+  const show = n => parts.forEach(e => e.classList.toggle("hide", +e.dataset.st > n));
+  if (RM || new URLSearchParams(location.search).has("pass")) { show(3); return; }
+  let timers = [], on = false;
+  const run = () => { timers.forEach(clearTimeout); timers = []; show(0); box.classList.remove("go");
+    timers.push(setTimeout(() => show(1), 700), setTimeout(() => { void box.offsetWidth; box.classList.add("go"); }, 1300), setTimeout(() => show(2), 3000), setTimeout(() => show(3), 3900), setTimeout(() => { if (on) run(); }, 9000)); };
+  new IntersectionObserver(es => { const was = on; on = es.some(e => e.isIntersecting); if (on && !was) run(); if (!on) { timers.forEach(clearTimeout); show(3); } }, { threshold: 0.4 }).observe(box);
+  show(3);
 })();
 </script>
 </body>
