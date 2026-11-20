@@ -658,6 +658,129 @@
 </main>
 <footer><p class="weave" style="margin:0 0 8px;font-size:13px;color:var(--ink-2)">스마트위브 — 한 올씩, 엮어서 만듭니다 · <span style="color:var(--ink)">기억도 한 올씩, 엮어서</span> <span class="ph-tag">문구 자리 표시</span></p><span class="pname">Memory Device</span> 홈 시안 · 모든 카드 · 대화는 가짜(바다상회) · docs/HOME.md</footer>
 
+<!-- md-link-line:begin -->
+<script>
+/* Generated from web/src/app/shared/link-line/link-line.ts by web/scripts/home-link-line.mjs — do not edit here. */
+"use strict";
+var MdLinkLine = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // src/app/shared/link-line/link-line.ts
+  var link_line_exports = {};
+  __export(link_line_exports, {
+    LINK: () => LINK,
+    LINK_DARK: () => LINK_DARK,
+    LINK_FLIGHT: () => LINK_FLIGHT,
+    LINK_HOME_MIN_PX: () => LINK_HOME_MIN_PX,
+    LINK_PEAK: () => LINK_PEAK,
+    linkFlight: () => linkFlight,
+    linkFrame: () => linkFrame,
+    linkShape: () => linkShape,
+    linkTravelMs: () => linkTravelMs,
+    taper: () => taper
+  });
+  var LINK = {
+    /** Width at the card it left, and at the card it lights (px). */
+    fromPx: 0.5,
+    toPx: 1.4,
+    /** The tip's diameter as a multiple of the line's end width (1.5 – 2×, 대표 17:42). */
+    tipTimes: 1.8,
+    alpha: 0.72,
+    /** Reduced motion's still line: the last quarter of its life it fades out. */
+    fadeShare: 0.25
+  };
+  var LINK_HOME_MIN_PX = 12;
+  var LINK_PEAK = 0.81;
+  var LINK_DARK = "#dfe2ff";
+  var LINK_FLIGHT = {
+    pxPerMs: 0.5,
+    minMs: 250,
+    maxMs: 900,
+    /** The fade after landing (× the length), the trail's time (map-v3 2-7-5). */
+    fadeMs: 1200
+  };
+  function linkTravelMs(px) {
+    return Math.min(LINK_FLIGHT.maxMs, Math.max(LINK_FLIGHT.minMs, px / LINK_FLIGHT.pxPerMs));
+  }
+  function linkFlight(age, times) {
+    const { travelMs, fadeMs } = times;
+    if (travelMs <= 0 || fadeMs <= 0 || age < -travelMs || age > fadeMs) return null;
+    if (age >= 0) return { reach: 1, light: 1 - age / fadeMs };
+    const reach = 1 + age / travelMs;
+    return { reach, light: Math.sin(reach * Math.PI / 2) };
+  }
+  function taper(a, b, wa, wb) {
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (len === 0) return [];
+    const nx = -(b.y - a.y) / len;
+    const ny = (b.x - a.x) / len;
+    return [
+      { x: a.x + nx * wa / 2, y: a.y + ny * wa / 2 },
+      { x: b.x + nx * wb / 2, y: b.y + ny * wb / 2 },
+      { x: b.x - nx * wb / 2, y: b.y - ny * wb / 2 },
+      { x: a.x - nx * wa / 2, y: a.y - ny * wa / 2 }
+    ];
+  }
+  function clearRims(len, rims) {
+    var _a;
+    const { fromR, toR } = rims;
+    const minPx = (_a = rims.minPx) != null ? _a : 0;
+    const both = fromR + toR;
+    if (len - both >= minPx && len > both) return [fromR, toR];
+    if (minPx <= 0) return null;
+    const keep = (len - Math.min(len, minPx)) / both;
+    return [fromR * keep, toR * keep];
+  }
+  function linkShape(from, to, rims, widths = LINK) {
+    var _a;
+    const len = Math.hypot(to.x - from.x, to.y - from.y);
+    const clear = len === 0 ? null : clearRims(len, rims);
+    if (clear === null) return null;
+    const [fromR, toR] = clear;
+    const ux = (to.x - from.x) / len;
+    const uy = (to.y - from.y) / len;
+    const start = { x: from.x + ux * fromR, y: from.y + uy * fromR };
+    const end = { x: to.x - ux * toR, y: to.y - uy * toR };
+    const reach = Math.min(1, Math.max(0, (_a = rims.reach) != null ? _a : 1));
+    const tip = { x: start.x + (end.x - start.x) * reach, y: start.y + (end.y - start.y) * reach };
+    return {
+      polygon: taper(start, tip, widths.fromPx, widths.toPx),
+      tip,
+      tipR: widths.toPx * LINK.tipTimes / 2
+    };
+  }
+  function linkFrame(input) {
+    const flight = linkFlight(input.age, input.times);
+    if (flight === null) return null;
+    const rims = {
+      fromR: input.fromR,
+      toR: input.toR,
+      reach: flight.reach,
+      ...input.minPx === void 0 ? {} : { minPx: input.minPx }
+    };
+    const shape = linkShape(input.from, input.to, rims, input.widths);
+    return shape === null ? null : { shape, light: flight.light };
+  }
+  return __toCommonJS(link_line_exports);
+})();
+</script>
+<!-- md-link-line:end -->
 <script>
 (() => {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -716,19 +839,32 @@
         if (age >= 0 && age < 1600 && p.born > 0) { const u = age / 1600; ctx.globalAlpha = (1 - u) * .8; ctx.strokeStyle = COL[p.k]; ctx.beginPath(); ctx.arc(x, y, r + 4 + u * 26, 0, 6.283); ctx.stroke(); }
       });
       ctx.globalAlpha = 1;
-      // glints: pulse + growing line to a neighbor
+      // glints: pulse on the star, and the 이어서 line drawn by the shared module (MdLinkLine, same as the console map)
+      const L = window.MdLinkLine;
       for (let i = fx.length - 1; i >= 0; i--) {
-        const f = fx[i], u = (t - f.t0) / f.dur; if (u >= 1) { fx.splice(i, 1); continue; }
+        const f = fx[i], age = t - f.t0; if (age < 0) continue;
         const p = G.P[f.id], [x, y] = pos(p), r = rad(p);
-        ctx.globalAlpha = Math.sin(u * Math.PI) * .75; ctx.fillStyle = "#fff"; ctx.shadowColor = COL[p.k]; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(x, y, r + 3 + u * 12, 0, 6.283); ctx.stroke();
-        if (f.to != null) { const [x2, y2] = pos(G.P[f.to]), v = Math.min(1, u * 2); ctx.globalAlpha = Math.sin(u * Math.PI) * .9; ctx.strokeStyle = "rgba(220,224,255,.9)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (x2 - x) * v, y + (y2 - y) * v); ctx.stroke(); ctx.lineWidth = 1; }
+        const pulse = age < f.dur, line = f.to != null && age < f.travel + L.LINK_FLIGHT.fadeMs;
+        if (!pulse && !line) { fx.splice(i, 1); continue; }
+        if (pulse) { const u = age / f.dur; ctx.globalAlpha = Math.sin(u * Math.PI) * .75; ctx.fillStyle = "#fff"; ctx.shadowColor = COL[p.k]; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+          ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(x, y, r + 3 + u * 12, 0, 6.283); ctx.stroke(); }
+        if (f.to != null) {
+          if (!f.landed && age >= f.travel) { f.landed = true; f.onLand(f.t0 + f.travel); }
+          if (line) { const q = G.P[f.to], [x2, y2] = pos(q);
+            const fr = L.linkFrame({ from: { x, y }, to: { x: x2, y: y2 }, fromR: r, toR: rad(q), minPx: L.LINK_HOME_MIN_PX, age: age - f.travel, times: { travelMs: Math.max(1, f.travel), fadeMs: L.LINK_FLIGHT.fadeMs } });
+            if (fr) { ctx.globalAlpha = L.LINK_PEAK * fr.light; ctx.fillStyle = L.LINK_DARK; ctx.beginPath(); fr.shape.polygon.forEach((v, j) => j ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y)); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.arc(fr.shape.tip.x, fr.shape.tip.y, fr.shape.tipR, 0, 6.283); ctx.fill(); } }
+        }
         ctx.globalAlpha = 1;
       }
     }
     const nb = id => { const e = G.E.find(([a, b]) => a === id || b === id); return e ? (e[0] === id ? e[1] : e[0]) : null; };
-    const glint = (id, withLine = true, dur = 1400, to) => fx.push({ id, to: to !== undefined ? to : (withLine ? nb(id) : null), t0: performance.now(), dur });
-    const chain = (id, hops) => { const path = [id], seen = new Set([id]); for (let i = 0; i < hops; i++) { const cur = path[path.length - 1]; const nx = G.E.filter(([a, b]) => a === cur || b === cur).map(([a, b]) => a === cur ? b : a).filter(j => !seen.has(j)); if (!nx.length) break; const j = nx[Math.floor(Math.random() * nx.length)]; path.push(j); seen.add(j); } path.forEach((pid, i) => setTimeout(() => glint(pid, false, 2000, i < path.length - 1 ? path[i + 1] : null), RM ? 0 : i * 300)); return path; };
+    // travel: the shared speed on the drawn length (reduced motion: no flight, the line is there at once and fades)
+    const travelOf = (a, b) => { if (RM) return 0; const [x1, y1] = pos(G.P[a]), [x2, y2] = pos(G.P[b]); return window.MdLinkLine.linkTravelMs(Math.hypot(x2 - x1, y2 - y1)); };
+    // a line lights its target the moment the tip lands (onLand); by default a short pulse there
+    const glint = (id, withLine = true, dur = 1400, to, onLand, t0) => { const tgt = to !== undefined ? to : (withLine ? nb(id) : null); fx.push({ id, to: tgt, t0: t0 ?? performance.now(), dur, travel: tgt != null ? travelOf(id, tgt) : 0, onLand: onLand || (at => glint(tgt, false, 900, null, null, at)) }); };
+    // a chain: each hop's tip lands, then the next star lights and sends its own line
+    const chain = (id, hops) => { const path = [id], seen = new Set([id]); for (let i = 0; i < hops; i++) { const cur = path[path.length - 1]; const nx = G.E.filter(([a, b]) => a === cur || b === cur).map(([a, b]) => a === cur ? b : a).filter(j => !seen.has(j)); if (!nx.length) break; const j = nx[Math.floor(Math.random() * nx.length)]; path.push(j); seen.add(j); }
+      const hop = (i, at) => glint(path[i], false, 2000, i < path.length - 1 ? path[i + 1] : null, next => hop(i + 1, next), at); hop(0); return path; };
     const hit = (mx, my) => { let best = null, bd = 1e9; G.P.forEach(p => { const [x, y] = pos(p), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = p; } }); return bd < 22 * 22 ? best : null; };
     return { fit, draw, glint, chain, hit, st, pos, nb, flyView };
   }
