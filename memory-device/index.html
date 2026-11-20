@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory Device 홈</title>
+<meta name="description" content="Memory Device — AI 에이전트가 어제 정한 것을 오늘도 기억합니다. (준비 중)">
+<link rel="icon" href="/logo.png" type="image/png">
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script>try{document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<style>
+/*
+ * Design base tokens (docs/ui/base, 2026-11-14).
+ * Drop-in for web/src/styles/tokens.css: every name already in the web base (25f6d20) is kept
+ * with the same meaning; new names are added. Values come from map sian v2 (docs/ui/sian-v2).
+ * Theme: follows the OS by default; [data-theme] on <html> overrides it.
+ * Rule: components read these variables only — no raw colours, px spacing or durations.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* ── surfaces and text ─────────────────────────────────────────── */
+  --color-bg: #eef0f4; /* page ground, slight blue bias */
+  --color-surface: #fff; /* panels, cards, header */
+  --color-surface-2: #f7f8fa; /* sunken: inputs, hover rows, table head */
+  --color-border: #e4e7ec;
+  --color-border-subtle: #eef0f3; /* row dividers inside a panel */
+  --color-border-control: #878d98; /* inputs · switches · segmented: 3:1 boundary (WCAG 1.4.11) */
+  --color-text: #171a20;
+  --color-text-muted: #565c66;
+  --color-text-faint: #676d78; /* ≥4.5 on bg · surface · surface-2 (A11Y.md) */
+  --color-brand: #3d3f8c; /* app's own colour — never a card kind */
+  --color-brand-tint: rgb(61 63 140 / 8%); /* selected row, hover on links */
+  --color-on-brand: #fff; /* text on a brand fill */
+  --color-focus: #3d3f8c;
+  --color-scrim: rgb(11 13 18 / 40%); /* behind dialogs and sheets */
+
+  /* ── card kinds (GLOSSARY) — dots, rings and chips only ────────── */
+  --color-kind-todo: #b07e10; /* was #c08a12 — 2.57 on map ground #e9ebf5 (A11Y 1-1) */
+  --color-kind-decision: #b05a6e;
+  --color-kind-blocker: #e03b45;
+  --color-kind-fact: #4f6ef2;
+  --color-kind-done: #1e9875; /* was #1f9e7a — 2.84 on map ground (A11Y 1-1) */
+  --opacity-disabled: 0.65; /* was 0.45 in controls — locked buttons under 3:1 (A11Y 1-1) */
+  --color-kind-tentative: #9a68d8;
+
+  /* ── meaning — banners, buttons, field states; always with an icon and a word ──
+   * Hues sit between the kind hues: good 122° (done is 163°), warn 22° (todo 41°, afterglow 30°),
+   * danger 338° (blocker 356°). Form keeps them apart too: meaning = fill or bar, kind = dot. */
+  --color-good: #2a7230;
+  --color-good-tint: rgb(42 114 48 / 10%);
+  --color-warn: #a34a08;
+  --color-warn-tint: rgb(163 74 8 / 10%);
+  --color-danger: #c81e5a;
+  --color-danger-tint: rgb(200 30 90 / 9%);
+
+  /* ── map (sian v2) ─────────────────────────────────────────────── */
+  --color-map-bg-1: #f4f5fb;
+  --color-map-bg-2: #e9ebf5;
+  --color-edge: #aeb3c6; /* real edges */
+  --color-map-label: #2a2e38;
+  --color-map-label-halo: rgb(244 245 251 / 92%);
+  --color-afterglow: #d9822b; /* recently called star (⑮) */
+
+  /* ── type ──────────────────────────────────────────────────────── */
+  --font-body: 'Inter', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --text-micro: 0.625rem; /* 10px — tags inside small cards */
+  --text-caption: 0.6875rem; /* 11px — table head, meta */
+  --text-label: 0.71875rem; /* 11.5px — field labels, tile labels */
+  --text-small: 0.8125rem; /* 13px — rows, secondary text */
+  --text-body: 0.875rem; /* 14px */
+  --text-title: 1rem; /* 16px — panel titles, card titles */
+  --text-heading: 1.25rem; /* 20px — page titles in the document frame */
+  --text-figure: 1.375rem; /* 22px — number tiles (mono) */
+  --text-display: 1.75rem; /* 28px — one per screen at most */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-strong: 600;
+  --weight-bold: 700;
+  --tracking-tight: -0.01em;
+  --tracking-caps: 0.04em; /* short uppercase or Korean section labels */
+  --leading-tight: 1.3;
+  --leading-body: 1.5;
+
+  /* ── space (4px grid) ──────────────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-gutter: clamp(1rem, 0.5rem + 2vw, 1.5rem);
+
+  /* ── layout ────────────────────────────────────────────────────── */
+  --size-header: 3.5rem; /* 56px desktop · 52px phone (see .shell-bar media rule) */
+  --size-nav: 14.5rem; /* 232px side menu */
+  --size-nav-rail: 4rem; /* 64px collapsed menu (1024–1279) */
+  --size-aside: 21.25rem; /* 340px side pane (map detail) */
+  --size-content: 75rem; /* 1200px max width, document frame */
+  --size-tabbar: 3.5rem; /* 56px phone bottom tabs (+ safe area) */
+  --size-touch: 2.75rem; /* 44px minimum touch target */
+  --size-control: 2.25rem; /* 36px buttons and inputs, desktop */
+  --size-control-sm: 1.875rem; /* 30px compact (toolbars, table actions) */
+
+  /* ── shape ─────────────────────────────────────────────────────── */
+  --border-width: 1px;
+  --radius-mark: 2px; /* tiny marks: bars, dots, lines inside chips (아영 2026-11-15) */
+  --radius-control: 8px; /* buttons, inputs, segmented */
+  --radius-card: 9px; /* small map cards, list cards */
+  --radius-tile: 12px;
+  --radius-panel: 14px;
+  --radius-sheet: 18px; /* top corners of phone sheets, dialogs */
+  --radius-round: 999px;
+  --shadow-panel: 0 1px 2px rgb(20 24 33 / 4%), 0 2px 10px rgb(20 24 33 / 5%);
+  --shadow-raise: 0 6px 24px rgb(20 24 33 / 14%); /* popovers, menus, bubbles */
+  --shadow-overlay: 0 18px 48px rgb(20 24 33 / 24%); /* dialogs, sheets */
+
+  /* ── motion ────────────────────────────────────────────────────── */
+  --duration-fast: 150ms; /* hover, press */
+  --duration-switch: 200ms; /* DESIGN 4.8: seat picker crossfade · tab change */
+  --duration-sheet: 280ms; /* sheet / dialog in */
+  --duration-signal-step: 300ms; /* DESIGN 4.8: hop interval */
+  --duration-fly-min: 400ms; /* map flight, scales with distance */
+  --duration-fly-max: 800ms;
+  --duration-layout: 600ms; /* DESIGN 4.8: old to new layout */
+  --duration-glow: 2000ms; /* one signal, on then off */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* things arriving */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* things moving between two places */
+  --ease-fly: cubic-bezier(0.33, 1, 0.68, 1); /* ease-out cubic, map flights */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: #0b0d12;
+    --color-surface: #14171d;
+    --color-surface-2: #191d24;
+    --color-border: #242832;
+    --color-border-subtle: #1d212a;
+    --color-border-control: #636b7c;
+    --color-text: #e7eaef;
+    --color-text-muted: #a1a8b3;
+    --color-text-faint: #8a92a0;
+    --color-brand: #9ea0f0;
+    --color-brand-tint: rgb(158 160 240 / 14%);
+    --color-on-brand: #14171d;
+    --color-focus: #9ea0f0;
+    --color-scrim: rgb(0 0 0 / 55%);
+    --color-kind-todo: #e3c24c;
+    --color-kind-decision: #d98a9c;
+    --color-kind-blocker: #ff6168;
+    --color-kind-fact: #8aa0ff;
+    --color-kind-done: #4fc9a2;
+    --color-kind-tentative: #c49bf0;
+    --color-good: #7cc47f;
+    --color-good-tint: rgb(124 196 127 / 13%);
+    --color-warn: #f59e5b;
+    --color-warn-tint: rgb(245 158 91 / 13%);
+    --color-danger: #ff7aa5;
+    --color-danger-tint: rgb(255 122 165 / 12%);
+    --color-map-bg-1: #0f1320;
+    --color-map-bg-2: #090b13;
+    --color-edge: #3a4257;
+    --color-map-label: #eef0f6;
+    --color-map-label-halo: rgb(9 11 19 / 85%);
+    --color-afterglow: #ffb46b;
+    --shadow-panel: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-raise: 0 8px 28px rgb(0 0 0 / 50%);
+    --shadow-overlay: 0 20px 56px rgb(0 0 0 / 60%);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #0b0d12;
+  --color-surface: #14171d;
+  --color-surface-2: #191d24;
+  --color-border: #242832;
+  --color-border-subtle: #1d212a;
+  --color-border-control: #636b7c;
+  --color-text: #e7eaef;
+  --color-text-muted: #a1a8b3;
+  --color-text-faint: #8a92a0;
+  --color-brand: #9ea0f0;
+  --color-brand-tint: rgb(158 160 240 / 14%);
+  --color-on-brand: #14171d;
+  --color-focus: #9ea0f0;
+  --color-scrim: rgb(0 0 0 / 55%);
+  --color-kind-todo: #e3c24c;
+  --color-kind-decision: #d98a9c;
+  --color-kind-blocker: #ff6168;
+  --color-kind-fact: #8aa0ff;
+  --color-kind-done: #4fc9a2;
+  --color-kind-tentative: #c49bf0;
+  --color-good: #7cc47f;
+  --color-good-tint: rgb(124 196 127 / 13%);
+  --color-warn: #f59e5b;
+  --color-warn-tint: rgb(245 158 91 / 13%);
+  --color-danger: #ff7aa5;
+  --color-danger-tint: rgb(255 122 165 / 12%);
+  --color-map-bg-1: #0f1320;
+  --color-map-bg-2: #090b13;
+  --color-edge: #3a4257;
+  --color-map-label: #eef0f6;
+  --color-map-label-halo: rgb(9 11 19 / 85%);
+  --color-afterglow: #ffb46b;
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-raise: 0 8px 28px rgb(0 0 0 / 50%);
+  --shadow-overlay: 0 20px 56px rgb(0 0 0 / 60%);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-switch: 0ms;
+    --duration-sheet: 0ms;
+    --duration-signal-step: 0ms;
+    --duration-fly-min: 0ms;
+    --duration-fly-max: 0ms;
+    --duration-layout: 0ms;
+  }
+}
+
+</style>
+<style>
+  /* Signed-out home (docs/HOME.md). Night sky first: the product's own map is the hero. Fake data only (바다상회). */
+  :root{--night:#05070e;--night-2:#0a0e1a;--ink:#eef0f7;--ink-2:#b7bccb;--ink-3:#8a92a0;--glass:rgb(255 255 255 / .05);--glass-line:rgb(255 255 255 / .1);--gut:max(16px,env(safe-area-inset-left,0px));--wide:1160px}
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{margin:0;background:var(--night);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
+  a{color:inherit}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--color-brand);outline-offset:3px;border-radius:6px}
+  header.nav{position:absolute;left:0;right:0;z-index:20;display:flex;align-items:center;gap:18px;max-width:var(--wide);margin:0 auto;padding:18px var(--gut)}
+  .brand{display:flex;gap:10px;align-items:center;font-weight:700;font-size:17px;text-decoration:none}
+  .brand svg{width:30px;height:30px}
+  .ph-tag{font-size:10px;font-weight:600;color:var(--ink-3);border:1px dashed var(--ink-3);border-radius:4px;padding:0 5px;margin-left:4px}
+  .nav .links{display:flex;gap:18px;font-size:14px;color:var(--ink-2)}
+  .nav .links a{text-decoration:none}
+  .nav .links a:hover{color:var(--ink)}
+  .nav .sp{flex:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:15px;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:transform 150ms var(--ease-out,ease),background 150ms}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.pri{background:var(--ink);color:#05070e}
+  .btn.pri:hover{background:#fff}
+  .btn.sec{border-color:var(--glass-line);background:var(--glass);color:var(--ink)}
+  .btn.sec:hover{border-color:rgb(255 255 255 / .3)}
+  .btn.sm{min-height:36px;padding:0 14px;font-size:14px}
+  .nav .login{font-size:14px;color:var(--ink-2);text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+  /* 준비 중 — 로그인·시작하기 비활성(대표 2026-11-20) */
+  .soon{opacity:.42;cursor:default;pointer-events:none}
+  .btn.soon:hover{transform:none}
+  /* hero */
+  .hero{position:relative;min-height:max(640px,100svh);overflow:hidden;display:flex;align-items:flex-end;isolation:isolate}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
+  .hero::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 62% 56% at 28% 78%,rgb(5 7 14 / .94),rgb(5 7 14 / .7) 50%,transparent 80%),linear-gradient(180deg,rgb(5 7 14 / .6),transparent 18%,transparent 70%,var(--night))}
+  .hero .in>*{animation:wakein 1100ms var(--ease-out,ease) both;animation-delay:.6s}
+  .hero .in>*:nth-child(2){animation-delay:.7s}.hero .in>*:nth-child(3){animation-delay:.8s}.hero .in>*:nth-child(n+4){animation-delay:.9s}
+  .again .hero .in>*{animation-duration:500ms;animation-delay:0s!important}
+  @keyframes wakein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.hero .in>*{animation:none}}
+  @media (max-width:640px){.hero::after{background:linear-gradient(180deg,rgb(5 7 14 / .55),transparent 18%,transparent 34%,rgb(5 7 14 / .62) 50%,rgb(5 7 14 / .88) 68%,var(--night))}}
+  .hero .in{width:100%;max-width:var(--wide);margin:0 auto;padding:0 var(--gut) clamp(56px,10vh,120px)}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2);background:var(--glass);border:1px solid var(--glass-line);border-radius:999px;padding:4px 12px;backdrop-filter:blur(6px)}
+  .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--color-kind-done);box-shadow:0 0 10px var(--color-kind-done)}
+  .hero h1{margin:18px 0 0;font-size:clamp(38px,6.4vw,84px);line-height:1.06;letter-spacing:-.035em;font-weight:800;max-width:14ch;text-wrap:balance}
+  .hero h1 em{font-style:normal;background:linear-gradient(100deg,#fff 10%,var(--color-brand) 55%,var(--color-kind-tentative));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{margin:18px 0 0;max-width:46ch;font-size:clamp(16px,1.4vw,19px);color:var(--ink-2)}
+  .hero .once{margin:12px 0 0;font-size:15px;font-weight:600;color:var(--ink)}.hero .once span{font-weight:400;color:var(--ink-2)}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+  .agents-line{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:36px;font-size:13px;color:var(--ink-3)}
+  .agents-line .a{border:1px solid var(--glass-line);border-radius:999px;padding:3px 10px;color:var(--ink-2)}
+  .agents-line .a.later{color:var(--ink-3);border-style:dashed}
+  .heroctl{position:absolute;right:var(--gut);bottom:20px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:2}
+  .hero .live{margin:0;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);text-align:right;max-width:none;white-space:nowrap}
+  /* sections */
+  section.s{max-width:var(--wide);margin:0 auto;padding:clamp(72px,12vh,140px) var(--gut) 0}
+  .kick{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;color:var(--color-brand);text-transform:uppercase}
+  h2{margin:10px 0 0;font-size:clamp(28px,3.6vw,48px);line-height:1.12;letter-spacing:-.03em;font-weight:800;max-width:20ch;text-wrap:balance}
+  .lead{margin:14px 0 0;max-width:52ch;color:var(--ink-2);font-size:17px}
+  .gloss{color:var(--ink-3);font-size:14px}
+  /* ① pains */
+  .pains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:40px}
+  .pain{position:relative;padding:22px;border-radius:20px;background:linear-gradient(180deg,var(--glass),transparent);border:1px solid var(--glass-line)}
+  .pain:nth-child(2){transform:translateY(28px)}
+  .pain:nth-child(3){transform:translateY(8px)}
+  .bub{display:inline-block;max-width:100%;padding:10px 14px;border-radius:16px 16px 16px 4px;background:#1b2133;font-size:15px}
+  .bub.me{border-radius:16px 16px 4px 16px;background:var(--color-brand);color:#0b0d12;margin-left:auto}
+  .pain .row{display:flex;margin-top:10px}
+  .pain small{display:block;margin-top:14px;color:var(--ink-3);font-size:13px}
+  /* ② moment */
+  .moment{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;margin-top:40px;align-items:stretch}
+  .term{background:#0a0c12;border:1px solid var(--glass-line);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px -30px rgb(0 0 0 / .9),0 0 0 1px rgb(158 160 240 / .06)}
+  .term .bar{display:flex;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--glass-line);font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .term .bar i{width:10px;height:10px;border-radius:50%;background:#2a2f3d}
+  .term pre{margin:0;padding:18px;min-height:330px;font-family:var(--font-mono);font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:keep-all;color:#d8dcea}
+  .term .dim{color:#6f7787}.term .ok{color:var(--color-kind-done)}.term .me{color:#fff;font-weight:600}.term .att{color:var(--color-brand)}.term .card{color:var(--color-kind-decision)}
+  .caret{display:inline-block;width:8px;height:1.1em;vertical-align:-2px;background:var(--ink-2);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .mini{position:relative;border-radius:16px;border:1px solid var(--glass-line);background:radial-gradient(ellipse at 50% 40%,#0f1428,#06080f);overflow:hidden;min-height:330px}
+  .mini canvas{position:absolute;inset:0;width:100%;height:100%}
+  .mini .cap{position:absolute;left:14px;bottom:12px;right:14px;font-size:13px;color:var(--ink-2);display:flex;gap:8px;align-items:center}
+  .mini .cap b{color:var(--ink)}
+  .steps{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
+  .step{font-size:13px;color:var(--ink-3);border:1px solid var(--glass-line);border-radius:999px;padding:4px 12px;transition:color 200ms,border-color 200ms,background 200ms}
+  .step.on{color:var(--ink);border-color:var(--color-brand);background:rgb(158 160 240 / .12)}
+  .steps .sp{flex:1}
+  .frames{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+  .frames figure{margin:0;border:1px solid var(--glass-line);border-radius:14px;padding:14px;background:#0a0c12;font-family:var(--font-mono);font-size:12px;color:#d8dcea;white-space:pre-wrap}
+  .frames figcaption{font-family:var(--font-body);font-size:13px;color:var(--ink-2);margin-bottom:8px}
+  .rm .frames{display:grid}
+  /* ③ roles */
+  .roles{margin-top:36px}
+  .tabs{display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--glass-line);background:var(--glass);flex-wrap:wrap}
+  .tabs button{min-height:40px;padding:0 18px;border-radius:999px;border:0;background:none;color:var(--ink-2);cursor:pointer;font-weight:600}
+  .tabs button[aria-selected="true"]{background:var(--ink);color:#05070e}
+  .scene{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;margin-top:24px;align-items:center}
+  .scene h3{margin:0;font-size:26px;letter-spacing:-.02em;line-height:1.25}
+  .scene p{color:var(--ink-2);margin:12px 0 0}
+  .shot{border-radius:16px;border:1px solid var(--glass-line);background:#0d1019;padding:18px;font-size:14px}
+  .shot .t{font-family:var(--font-mono);font-size:12.5px;line-height:1.7;white-space:pre-wrap;color:#d8dcea}
+  .shot h4{margin:0 0 10px;font-size:14px;color:var(--ink-2);font-weight:600;display:flex;gap:8px;align-items:center}
+  .crow{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--glass-line)}
+  .crow:first-of-type{border-top:0}
+  .crow .d{width:9px;height:9px;border-radius:50%;flex:none}
+  .crow .tt{flex:1;min-width:0}
+  .crow .m{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .chip{font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;border:1px solid var(--glass-line);color:var(--ink-2)}
+  .seats2{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+  .seat{border:1px solid var(--glass-line);border-radius:12px;padding:12px;font-size:13px}
+  .seat b{display:block;font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:6px}
+  .arrow{font-size:22px;color:var(--color-brand)}
+  /* ④ agents */
+  .agents{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:36px}
+  .ag{border:1px solid var(--glass-line);border-radius:18px;padding:20px;background:var(--glass);display:flex;flex-direction:column;gap:10px;min-height:200px}
+  .ag .nm{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .ag .st{align-self:flex-start;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px}
+  .ag.ok .st{background:rgb(79 201 162 / .15);color:var(--color-kind-done)}
+  .ag.later{border-style:dashed;background:none}
+  .ag.later .nm{color:var(--ink-2)}.ag.later p{color:var(--ink-3)}
+  .ag.later .st{border:1px dashed var(--ink-3);color:var(--ink-2)}
+  .ag p{margin:0;font-size:14px;color:var(--ink-2)}
+  .ag .via{margin-top:auto;font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .honest{margin-top:16px;font-size:13px;color:var(--ink-3)}
+  /* ⑤ demo */
+  .demo{position:relative;margin-top:36px;border-radius:24px;border:1px solid var(--glass-line);overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#101633,#05070e 70%);height:min(620px,78vh);min-height:460px}
+  .demo canvas{position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:manipulation}
+  .demo .tools{position:absolute;left:16px;top:16px;right:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;pointer-events:none}
+  .demo .tools>*{pointer-events:auto}
+  .demo .hint{font-size:13px;color:var(--ink-2);background:rgb(5 7 14 / .6);border:1px solid var(--glass-line);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
+  .demo .tools .sp{flex:1}
+  .demo .card:not(.on){visibility:hidden}
+  .demo .card{position:absolute;right:16px;bottom:16px;width:min(340px,calc(100% - 32px));background:rgb(13 16 25 / .94);border:1px solid var(--glass-line);border-radius:16px;padding:16px;backdrop-filter:blur(8px);transform:translateY(12px);opacity:0;pointer-events:none;transition:opacity 200ms,transform 200ms}
+  .demo .card.on{opacity:1;transform:none;pointer-events:auto}
+  .demo .card .k{font-size:12px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+  .demo .card h4{margin:6px 0 0;font-size:18px;line-height:1.35}
+  .demo .card dl{display:grid;grid-template-columns:72px 1fr;gap:4px 10px;margin:12px 0 0;font-size:13px}
+  .demo .card dt{color:var(--ink-3)}.demo .card dd{margin:0}
+  .demo .card .x{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;border:0;background:none;color:var(--ink-2);cursor:pointer;font-size:16px}
+  .demo .count{position:absolute;left:16px;bottom:16px;font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
+  /* ⑥ proof */
+  .proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:36px;border-radius:20px;overflow:hidden;background:var(--glass-line);border:1px solid var(--glass-line)}
+  .proof div{background:var(--night);padding:26px 22px}
+  .proof .v{font-size:clamp(30px,3.6vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1}
+  .proof .v small{font-size:.45em;color:var(--ink-3);font-weight:600;letter-spacing:0}
+  .proof .l{margin-top:10px;font-size:14px;color:var(--ink-2)}
+  .measured{margin-top:12px;font-size:13px;color:var(--ink-3)}
+  .grow{margin-top:36px;padding:32px;border-radius:24px;background:radial-gradient(ellipse at 85% 0%,rgb(158 160 240 / .22),transparent 60%),var(--glass);border:1px solid var(--glass-line)}
+  .grow h3{margin:0;font-size:18px;font-weight:700}.grow h3 span{color:var(--ink-3);font-weight:500}
+  .gnums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px;align-items:end}
+  .gnums div{display:flex;flex-direction:column}
+  .gnums b{font-size:clamp(40px,6vw,88px);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+  .gnums .top b{background:linear-gradient(100deg,#fff,var(--color-brand) 60%,var(--color-kind-tentative));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .gy{font-family:var(--font-mono);font-size:13px;color:var(--color-brand)}
+  .gu{font-size:14px;color:var(--ink-3)}
+  .gnote{margin:16px 0 0;font-size:13px;color:var(--ink-3)}.gnote a{color:var(--ink-2)}
+  .nowh{margin:32px 0 0;font-size:15px;color:var(--ink-2);font-weight:600}
+  .nowh+.proof{margin-top:12px}
+  @media (max-width:520px){.gnums{grid-template-columns:minmax(0,1fr)}.grow{padding:22px}}
+  /* ⑦ trust + price */
+  .trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:36px}
+  .tr{padding:20px;border-top:2px solid var(--color-brand)}
+  .tr b{display:block;font-size:17px}
+  .tr p{margin:6px 0 0;font-size:14px;color:var(--ink-2)}
+  .price{margin-top:56px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .pr{border:1px solid var(--glass-line);border-radius:18px;padding:22px;background:var(--glass)}
+  .pr b{font-size:18px}.pr p{margin:8px 0 0;color:var(--ink-2);font-size:14px}
+  .pr.why{background:linear-gradient(135deg,rgb(158 160 240 / .14),transparent);border-color:rgb(158 160 240 / .35)}
+  .final{text-align:center;padding:clamp(96px,16vh,180px) var(--gut) 72px;position:relative}
+  .final h2{margin:0 auto;max-width:18ch}
+  .final .cta{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+  footer{border-top:1px solid var(--glass-line);padding:24px var(--gut) calc(24px + env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;color:var(--ink-3)}
+
+  /* team memory */
+  .team{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:28px;margin-top:36px;align-items:start}
+  .stage{position:relative;height:440px;border-radius:24px;border:1px solid var(--glass-line);background:radial-gradient(ellipse at 50% 50%,#121a38,#06080f 72%);overflow:hidden}
+  .stage svg.links{position:absolute;inset:0;width:100%;height:100%}
+  .node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;width:170px}
+  .node .orb{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#05070e;box-shadow:0 0 0 6px rgb(255 255 255 / .04),0 0 30px -4px var(--c)}
+  .node .nm{font-size:13px;font-weight:700}
+  .node .mem{font-size:11px;color:var(--ink-3)}
+  .node.hub .orb{width:92px;height:92px;font-size:14px;background:radial-gradient(circle at 35% 30%,#fff6c9,var(--c));box-shadow:0 0 0 10px rgb(227 194 76 / .08),0 0 60px -6px var(--c)}
+  .node.dim{opacity:.35}
+  .node .lock{font-size:11px;color:var(--ink-3)}
+  .say{position:absolute;max-width:210px;font-size:13px;padding:8px 12px;border-radius:14px;background:#1b2133;opacity:0;transform:translateY(6px);transition:opacity 300ms,transform 300ms}
+  .say.on{opacity:1;transform:none}
+  .say.mono{font-family:var(--font-mono);font-size:12px;background:#0a0c12;border:1px solid var(--glass-line)}
+  .tcard{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;gap:6px;align-items:center;font-size:12px;font-weight:600;padding:6px 10px;border-radius:10px;background:#f4f1ff;color:#05070e;box-shadow:0 8px 30px -6px var(--color-kind-tentative);opacity:0;transition:left 900ms var(--ease-out,cubic-bezier(.2,.8,.2,1)),top 900ms var(--ease-out,cubic-bezier(.2,.8,.2,1)),opacity 300ms;white-space:nowrap}
+  .tcard i{width:8px;height:8px;border-radius:50%;background:var(--color-kind-decision)}
+  .tcard.on{opacity:1}
+  .tsteps{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .rules3{display:flex;flex-direction:column;gap:14px}
+  .rule{padding:16px 18px;border-radius:16px;border:1px solid var(--glass-line);background:var(--glass)}
+  .rule b{display:block;font-size:16px}
+  .rule p{margin:4px 0 0;font-size:14px;color:var(--ink-2)}
+  .eye{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink-3)}
+  .eye button{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--glass-line);background:none;color:var(--ink-2);cursor:pointer;font-size:13px}
+  .eye button[aria-pressed="true"]{background:var(--ink);color:#05070e}
+  @media (max-width:900px){.team{grid-template-columns:minmax(0,1fr)}}
+  @media (max-width:520px){.stage{height:520px}#say1{right:auto!important;left:50%;top:2%!important;max-width:none;white-space:nowrap}#say1.on{transform:translateX(-50%)}#say1:not(.on){transform:translate(-50%,6px)}#say2{left:4%!important;right:4%;bottom:3%!important;max-width:none}.node[data-n=dev]{top:66%!important}.node[data-n=plan],.node[data-n=design]{top:24%!important}.node[data-n=team]{top:45%!important}.node{width:120px}.node .orb{width:46px;height:46px}.node.hub .orb{width:72px;height:72px}.say{max-width:160px;font-size:12px}}
+  @media (prefers-reduced-motion:reduce){.say,.tcard{transition:none}}
+  @media (max-width:900px){
+    .nav .links{display:none}
+    .pains,.moment,.scene,.agents,.proof,.trust,.price{grid-template-columns:minmax(0,1fr)}
+    .agents{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .proof{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .trust{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .pain:nth-child(n){transform:none}
+    .hero .live{display:none}
+    .heroctl{bottom:auto;top:76px}
+  }
+  @media (pointer:coarse),(max-width:520px){.btn.sm,.tabs button,.eye button,.demo .card .x{min-height:44px}.demo .card .x{min-width:44px}.brand{min-height:44px}}
+  @media (max-width:520px){
+    .agents,.trust{grid-template-columns:minmax(0,1fr)}
+    .nav .login{display:none}
+    .term pre{font-size:12.5px;min-height:300px;padding:14px}
+    .mini{min-height:240px}
+    .frames{grid-template-columns:minmax(0,1fr)}
+    .seats2{grid-template-columns:minmax(0,1fr)}.arrow{transform:rotate(90deg);justify-self:center}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;border-radius:16px;width:100%}
+    .demo{height:520px}
+  }
+  @media (prefers-reduced-motion:reduce){.btn,.step,.demo .card{transition:none}.caret{animation:none}}
+</style>
+
+
+<header class="nav"><span class="brand"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d3f8c"/><stop offset="1" stop-color="#6b54b0"/></linearGradient><radialGradient id="h" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><circle cx="32" cy="32" r="22" fill="url(#h)"/><path d="M32 32c6-2 9 4 5 9s-14 4-17-3 3-17 13-18 19 6 18 15" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round"/><circle cx="32" cy="32" r="4.6" fill="#fff"/><circle cx="41.5" cy="41" r="2.6" fill="#fff"/><circle cx="20.5" cy="38.5" r="2.2" fill="#fff" fill-opacity=".9"/><circle cx="33" cy="15" r="1.9" fill="#fff" fill-opacity=".85"/><circle cx="51" cy="29" r="1.6" fill="#fff" fill-opacity=".75"/></svg><span class="pname">Memory Device</span></span><nav class="links" aria-label="홈 안내"><a href="#moment">어떻게</a><a href="#roles">역할마다</a><a href="#team">팀 기억</a><a href="#agents">에이전트</a><a href="#price">값</a></nav><span class="sp"></span><span class="login soon" aria-disabled="true">로그인</span><span class="btn pri sm soon" aria-disabled="true">시작하기</span></header>
+
+<main>
+  <section class="hero" aria-labelledby="hh">
+    <canvas id="skybase" aria-hidden="true"></canvas><canvas id="sky" aria-hidden="true"></canvas>
+    <div class="in">
+      <span class="eyebrow"><i></i>지금 이 지도에서 에이전트가 기억을 더듬는 중</span>
+      <h1 id="hh">어제 정한 걸, <em>오늘의 에이전트가</em> 기억합니다</h1>
+      <p class="sub" id="hsub">대화가 접히고 세션이 바뀌어도, 팀이 정한 것 · 할 일 · 막힌 것이 다음 말에 저절로 붙습니다.</p>
+      <p class="once">한 번 말하면, 평생 기억합니다 <span>— 지우지 않는 한.</span></p>
+      <div class="cta"><span class="btn pri soon" id="start" aria-disabled="true">시작하기</span><a class="btn sec" href="#demo">지도 만져 보기 ↓</a></div>
+      <div class="agents-line" aria-label="쓰는 에이전트"><span>지금 붙는 에이전트</span><span class="a">Claude Code</span><span class="a">직접 만든 에이전트(API)</span><span class="a later">Gemini CLI · 예정</span><span class="a later">Codex CLI · 예정</span><span class="a later">ChatGPT · 예정</span></div>
+    </div>
+    <div class="heroctl"><button class="btn sec sm" type="button" id="hpause" aria-pressed="false">❚❚ 움직임 멈춤</button><p class="live" aria-hidden="true" id="liveline">바다상회 · 카드 412장</p></div>
+  </section>
+
+  <section class="s" aria-labelledby="h1p">
+    <span class="kick">01 · 이런 적 있죠</span>
+    <h2 id="h1p">에이전트는 똑똑한데, 어제를 모릅니다</h2>
+    <div class="pains">
+      <div class="pain"><div class="row"><span class="bub me">환불 기한 늘려 줘</span></div><div class="row"><span class="bub">몇 일로 할까요? 지금 정책을 알려 주시면…</span></div><div class="row"><span class="bub me">그거 지난주에 정했잖아 😮‍💨</span></div><small>정한 것이 채팅에 묻혔다</small></div>
+      <div class="pain"><div class="row"><span class="bub me">결제 모듈 왜 이렇게 짰더라?</span></div><div class="row"><span class="bub">코드만으로는 까닭을 알 수 없어요.</span></div><small>정한 까닭이 남지 않았다</small></div>
+      <div class="pain"><div class="row"><span class="bub me">새 세션이라 처음부터 설명할게…</span></div><div class="row"><span class="bub">네, 말씀해 주세요!</span></div><small>세션이 바뀌면 처음부터</small></div>
+    </div>
+  </section>
+
+  <section class="s" id="moment" aria-labelledby="h2m">
+    <span class="kick">02 · 붙는 순간</span>
+    <h2 id="h2m">묻는 순간, 지난 결정이 먼저 와 있습니다</h2>
+    <p class="lead">쓴다 → 붙는다 → 보인다. 에이전트가 결정을 <b>카드</b>(정한 것 한 줄)로 남기고, 다음 말마다 맞는 카드가 저절로 <b>붙습니다</b>.</p>
+    <div class="moment" id="mom">
+      <div class="term" aria-label="터미널 재생 — 바다상회 개발 자리"><div class="bar"><i></i><i></i><i></i><span style="margin-left:8px">바다상회 · 개발 자리 · claude</span></div><pre id="tty" aria-live="off"></pre></div>
+      <div class="mini"><canvas id="minimap" aria-hidden="true"></canvas><div class="cap" id="mcap"><b>지도</b> 바다상회의 기억 412장</div></div>
+    </div>
+    <div class="steps" role="group" aria-label="장면 단계"><span class="step" data-st="0">① 묻는다</span><span class="step" data-st="1">② 기억 2장이 붙는다</span><span class="step" data-st="2">③ 지난 결정으로 답한다</span><span class="step" data-st="3">④ 새 결정을 카드로 쓴다</span><span class="sp"></span><button class="btn sec sm" type="button" id="mpause">❚❚ 멈춤</button><button class="btn sec sm" type="button" id="mreplay">↺ 다시 보기</button></div>
+    <div class="frames" aria-label="모션 줄이기 — 멈춘 세 장">
+      <figure><figcaption>① 묻는다</figcaption>&gt; 환불 기한을 14일로 늘려도 돼?</figure>
+      <figure><figcaption>② 기억 2장이 붙는다 · 지도에서 별 둘 반짝</figcaption>기억 2장이 붙었어요</figure>
+      <figure><figcaption>③ 답하고 ④ 새 카드 1장 · 새 별 하나</figcaption>11/12에 7일로 정하셨어요(까닭: 반품 물류비)…
+⏺ Memory Device · card_add — 결정 「환불 14일은 가을 행사 동안만」</figure>
+    </div>
+  </section>
+
+  <section class="s" id="roles" aria-labelledby="h3r">
+    <span class="kick">03 · 역할마다</span>
+    <h2 id="h3r">하나의 팀 기억, 넷이 다르게 씁니다</h2>
+    <div class="roles">
+      <div class="tabs" role="tablist" aria-label="역할"><button role="tab" aria-selected="true" data-r="pm" id="t-pm" aria-controls="scene">PM</button><button role="tab" aria-selected="false" data-r="dev" id="t-dev" aria-controls="scene">개발</button><button role="tab" aria-selected="false" data-r="ds" id="t-ds" aria-controls="scene">디자인</button><button role="tab" aria-selected="false" data-r="etc" id="t-etc" aria-controls="scene">그 밖</button></div>
+      <div class="scene" id="scene" role="tabpanel" aria-labelledby="t-pm"></div>
+    </div>
+  </section>
+
+
+  <section class="s" id="team" aria-labelledby="h3t">
+    <span class="kick">04 · 에이전트 팀</span>
+    <h2 id="h3t">에이전트 팀이, 같이 기억합니다</h2>
+    <p class="lead">자리마다 에이전트 하나. 한 자리가 정한 것은 <b>팀 기억</b>으로 올라가, 그게 필요한 다른 자리의 말에 붙어요.</p>
+    <div class="team">
+      <div>
+        <div class="stage" id="stage" role="img" aria-label="디자인 자리가 정한 「단추 높이는 44」가 팀 기억으로 올라가고, 개발 자리가 단추를 만들 때 그 카드가 붙는 장면">
+          <svg class="links" id="tlinks" aria-hidden="true"></svg>
+          <div class="node" data-n="plan" style="left:18%;top:22%;--c:var(--color-kind-fact)"><span class="orb" style="background:var(--color-kind-fact)">설계</span><span class="nm">설계 자리</span><span class="mem">자기 기억 214장</span></div>
+          <div class="node" data-n="design" style="left:82%;top:22%;--c:var(--color-kind-tentative)"><span class="orb" style="background:var(--color-kind-tentative)">디자인</span><span class="nm">디자인 자리</span><span class="mem">자기 기억 96장</span></div>
+          <div class="node" data-n="dev" style="left:50%;top:84%;--c:var(--color-kind-done)"><span class="orb" style="background:var(--color-kind-done)">개발</span><span class="nm">개발 자리</span><span class="mem">자기 기억 388장</span></div>
+          <div class="node hub" data-n="team" style="left:50%;top:45%;--c:var(--color-kind-todo)"><span class="orb">팀 기억</span><span class="mem" id="teamn">함께 붙는 카드 163장</span></div>
+          <div class="say" id="say1" style="right:4%;top:36%">단추 높이는 44로 하자 — 손가락 기준</div>
+          <div class="say mono" id="say2" style="left:4%;bottom:5%">&gt; 결제 단추 만들어 줘<br><span style="color:var(--color-brand)">기억 1장이 붙었어요</span><br>높이 44로 만들게요.</div>
+          <div class="tcard" id="tcard"><i></i>결정 「단추 높이는 44」</div>
+        </div>
+        <div class="tsteps" role="group" aria-label="장면 단계"><button class="btn sec sm" type="button" id="tpause">❚❚ 멈춤</button><button class="btn sec sm" type="button" id="treplay">↺ 다시 보기</button><span class="step" data-ts="0">① 디자인 자리가 정함</span><span class="step" data-ts="1">② 팀 기억으로</span><span class="step" data-ts="2">③ 개발 자리 말에 붙음</span></div>
+      </div>
+      <div class="rules3">
+        <div class="eye" role="group" aria-label="누구의 눈으로 볼지"><span>누구의 눈으로</span><button type="button" data-eye="plan" aria-pressed="false">설계</button><button type="button" data-eye="dev" aria-pressed="true">개발</button><button type="button" data-eye="design" aria-pressed="false">디자인</button></div>
+        <div class="rule"><b>자리마다 자기 기억</b><p id="eyetxt">개발 자리의 눈 — 자기 기억 388장 + 팀 기억 163장이 붙어요. 설계 · 디자인 자리의 대화 원문은 🔒 안 보여요.</p></div>
+        <div class="rule"><b>팀 기억은 모두에게 붙음</b><p>정한 것 · 규칙은 팀 기억으로. 어느 자리가 묻든 맞으면 붙어요.</p></div>
+        <div class="rule"><b>필요한 자리에만 열어 줌</b><p>「디자인 자리가 개발 자리를 본다」처럼 하나씩. 읽기만 되고, 언제든 거둬요.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="agents" aria-labelledby="h4a">
+    <span class="kick">05 · 쓰는 에이전트 그대로</span>
+    <h2 id="h4a">에이전트를 바꿔도, 기억은 남습니다</h2>
+    <p class="lead">플러그인으로 붙습니다. 지금 되는 것과 만드는 중인 것을 있는 그대로 적었어요.</p>
+    <div class="agents">
+      <div class="ag ok"><span class="nm">Claude Code</span><span class="st">됨</span><p>말마다 저절로 붙임 · 답 끝에 카드 쓰기 · 끊겨도 쌓아 뒀다 보냄 · 도구 여섯</p><span class="via">플러그인</span></div>
+      <div class="ag ok"><span class="nm">직접 만든 에이전트</span><span class="st">됨</span><p>붙임 · 찾기 · 쓰기 전부 — 공개 API 47개 요청</p><span class="via">API</span></div>
+      <div class="ag later"><span class="nm">Gemini CLI · Codex CLI · Grok CLI</span><span class="st">예정</span><p>찾기 · 쓰기 도구. 「저절로 붙임」은 그 도구가 훅을 줄 때만</p><span class="via">MCP 서버</span></div>
+      <div class="ag later"><span class="nm">ChatGPT · 그 밖의 채팅</span><span class="st">예정</span><p>찾기 · 쓰기</p><span class="via">커넥터 / API</span></div>
+    </div>
+    <p class="honest">이름은 각 회사의 상표예요. 「예정」은 아직 안 되는 것이에요 — 되면 여기서 「됨」으로 바꿔요.</p>
+  </section>
+
+  <section class="s" id="demo-s" aria-labelledby="h5d">
+    <span class="kick">06 · 지도 만져 보기</span>
+    <h2 id="h5d">가입 없이, 바다상회의 기억을 눌러 보세요</h2>
+    <div class="demo" id="demo">
+      <canvas id="demomap" role="img" aria-label="바다상회 기억 지도 — 별 하나가 카드 한 장. 아래 단추로도 고를 수 있어요"></canvas>
+      <div class="tools"><span class="hint" id="dhint">별을 한 번 누르면 그쪽으로 다가가 이어진 카드만 · 두 번 누르면 끝까지 당겨 전문</span><span class="sp"></span><button class="btn sec sm" type="button" id="dpick">아무 별이나 골라 주기</button><button class="btn pri sm" type="button" id="dlater">3일 뒤 ⏩</button></div>
+      <div class="card" id="dcard" role="dialog" aria-modal="false" aria-labelledby="dct"><button class="x" type="button" id="dclose" aria-label="닫기">✕</button><div class="k" id="dck"></div><h4 id="dct"></h4><dl id="dcd"></dl></div>
+      <span class="count" id="dcount"></span>
+    </div>
+  </section>
+
+  <section class="s" aria-labelledby="h6p">
+    <span class="kick">07 · 우리가 먼저 씁니다</span>
+    <h2 id="h6p">우리 사무실 에이전트 팀이 매일 쓰던 것을 꺼냈어요</h2>
+    <div class="grow" aria-labelledby="h6g">
+      <h3 id="h6g">이 속도로 쌓이면 <span>· 자리 하나에</span></h3>
+      <div class="gnums"><div><span class="gy">1년</span><b data-to="15000">15,000</b><span class="gu">장</span></div><div><span class="gy">5년</span><b data-to="75000">75,000</b><span class="gu">장</span></div><div class="top"><span class="gy">10년</span><b data-to="150000">150,000</b><span class="gu">장</span></div></div>
+      <p class="gnote">지금 속도(하루 41장)가 그대로일 때의 어림이에요. 그래서 <a href="#hh">문 앞의 지도</a>가 3만 장이에요 — 2년쯤 뒤의 모습.</p>
+    </div>
+    <h3 class="nowh">지금 잰 숫자</h3>
+    <div class="proof">
+      <div><div class="v">266<small> / 1,102턴</small></div><div class="l">하루 대화 중 기억이 붙은 턴</div></div>
+      <div><div class="v">1,084<small>장</small></div><div class="l">쌓인 카드</div></div>
+      <div><div class="v">0</div><div class="l">옮겨 심기 대조 차이</div></div>
+      <div><div class="v">0</div><div class="l">서버를 내렸다 올려도 잃은 쓰기</div></div>
+    </div>
+    <p class="measured">잰 날 2026-11-14 · 잰 곳 우리 사무실. 숫자가 바뀌면 같이 바꿔요.</p>
+  </section>
+
+  <section class="s" id="price" aria-labelledby="h7t">
+    <span class="kick">08 · 기억은 당신 것</span>
+    <h2 id="h7t">쌓을수록 값지고, 언제든 가져갈 수 있게</h2>
+    <div class="trust">
+      <div class="tr"><b>자리마다 격리</b><p>남의 <span class="gloss">자리(에이전트 하나)</span> 원문은 안 보여요. 열어 준 카드만 함께 봐요.</p></div>
+      <div class="tr"><b>지우면 따라 지움</b><p>원문을 지우면 거기서 나온 카드도 같이.</p></div>
+      <div class="tr"><b>통째로 내보내기</b><p>원장과 카드가 바뀐 일 전부를 한 묶음으로.</p></div>
+      <div class="tr"><b>내 기계에 설치</b><p>혼자라면 내 기계에서 돌려도 돼요.</p></div>
+    </div>
+    <div class="price">
+      <div class="pr"><b>혼자, 내 기계에서</b><p>무료</p></div>
+      <div class="pr"><b>팀</b><p>회사 기본료 + 쓰는 자리만큼</p></div>
+      <div class="pr why"><b>호출마다 · 용량마다 받지 않아요</b><p>쌓일수록 값진 걸 지우게 만들고 싶지 않아서요.</p></div>
+    </div>
+  </section>
+
+  <section class="final" aria-labelledby="h8f">
+    <h2 id="h8f">다음 세션의 에이전트가, 오늘을 기억하게</h2>
+    <div class="cta"><span class="btn pri soon" aria-disabled="true">시작하기</span><a class="btn sec" href="#demo">지도 다시 만져 보기</a></div>
+  </section>
+</main>
+<footer><p class="weave" style="margin:0 0 8px;font-size:13px;color:var(--ink-2)">스마트위브 — 한 올씩, 엮어서 만듭니다 · <span style="color:var(--ink)">기억도 한 올씩, 엮어서</span> <span class="ph-tag">문구 자리 표시</span></p><span class="pname">Memory Device</span> 홈 시안 · 모든 카드 · 대화는 가짜(바다상회) · docs/HOME.md</footer>
+
+<script>
+(() => {
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ?frame=<ms>[&open=old] draws the hero sky once at that time with a fixed random (home BUILD 4-1 ② pixel check).
+  const QS = new URLSearchParams(location.search), FRAME = QS.get("frame"), OPEN_OLD = QS.get("open") === "old";
+  if (FRAME !== null) { let ms = 1; Math.random = () => (ms = (ms * 16807) % 2147483647) / 2147483647; }
+  const $ = s => document.querySelector(s);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const KINDS = ["decision", "todo", "fact", "done", "blocker", "tentative"];
+  const KW = [0.34, 0.2, 0.2, 0.16, 0.05, 0.05];
+  const KN = { decision: "결정", todo: "할 일", fact: "사실", done: "끝남", blocker: "막힘", tentative: "임시" };
+  const COL = {}; KINDS.forEach(k => COL[k] = css("--color-kind-" + k) || "#9ea0f0");
+  const TITLES = ["환불은 7일 안에만", "포장 뜯으면 교환만", "새벽 배송은 서울만", "상세 사진은 4장으로", "가을 쿠폰 10% — 11/30까지", "택배사 바꾸기 막힘: 계약이 11/30에 끝남", "리뷰 답글은 하루 안에", "재고 0이면 품절 표시 대신 입고 알림", "첫 주문 무료 배송", "결제 모듈은 한 곳으로 모음", "상품명 앞 말머리 없앰", "주말 문의는 월요일 오전에 답", "포장재는 재생지로", "회원 등급 셋으로 줄임", "장바구니 30일 보관", "카드 할부는 3개월까지", "고객센터 번호 바꿈 공지", "모바일 첫 화면은 기획전 하나만", "선물 포장 2,000원", "배송비 기준 3만 원"];
+  const SEATS = ["개발 자리", "PM 자리", "디자인 자리", "운영 자리", "공유 앱"];
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pickKind = () => { let r = rnd(), a = 0; for (let i = 0; i < KINDS.length; i++) { a += KW[i]; if (r < a) return KINDS[i]; } return "fact"; };
+
+  function makeGalaxy(nClusters, perCluster, spread) {
+    const C = [], P = [];
+    for (let c = 0; c < nClusters; c++) { const a = c * 2.399, rr = 0.12 + 0.33 * Math.sqrt((c + .5) / nClusters); C.push({ x: .5 + Math.cos(a) * rr * 1.25, y: .5 + Math.sin(a) * rr * .8, n: 0 }); }
+    for (let c = 0; c < nClusters; c++) addCluster(C[c], c, Math.round(perCluster * (0.5 + rnd())), spread);
+    function addCluster(cc, ci, n, sp) { for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = Math.pow(rnd(), .7) * sp; P.push({ id: P.length, c: ci, x: cc.x + Math.cos(a) * d * 1.3, y: cc.y + Math.sin(a) * d, k: pickKind(), att: Math.floor(Math.pow(rnd(), 3) * 40), born: -1e9, title: TITLES[P.length % TITLES.length], seat: SEATS[Math.floor(rnd() * SEATS.length)] }); cc.n++; } }
+    const E = [];
+    P.forEach(p => { const near = P.filter(q => q.c === p.c && q !== p).sort((a, b) => (a.x - p.x) ** 2 + (a.y - p.y) ** 2 - ((b.x - p.x) ** 2 + (b.y - p.y) ** 2)).slice(0, 2); near.forEach(q => { if (q.id > p.id && rnd() < .55) E.push([p.id, q.id]); }); });
+    return { C, P, E, add: addCluster };
+  }
+
+  function Painter(canvas, G, opt) {
+    const ctx = canvas.getContext("2d"); let w = 0, h = 0, dpr = 1;
+    const fx = [];
+    const st = { focus: null, near: null, view: { s: 1, x: 0, y: 0 } };
+    function fit() { dpr = Math.min(2, devicePixelRatio || 1); w = canvas.clientWidth; h = canvas.clientHeight; canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    const sc = () => (opt.cover ? Math.max : Math.min)(w / (opt.fitW || 1), h / (opt.fitH || 1));
+    const pos = p => { const s = sc() * st.view.s; return [w / 2 + (p.x - .5 - st.view.x) * s, h / 2 + (p.y - .5 - st.view.y) * s]; };
+    const rad = p => (1.1 + Math.sqrt(p.att) * .55) * (opt.size || 1) * Math.sqrt(st.view.s);
+    let fly = null;
+    const flyView = (to, ms) => { fly = { from: { ...st.view }, to, t0: performance.now(), ms: RM ? 0 : ms }; };
+    function draw(t) {
+      if (fly) { const u = fly.ms ? Math.min(1, (t - fly.t0) / fly.ms) : 1, e = 1 - Math.pow(1 - u, 3); st.view = { s: fly.from.s * Math.pow(fly.to.s / fly.from.s, e), x: fly.from.x + (fly.to.x - fly.from.x) * e, y: fly.from.y + (fly.to.y - fly.from.y) * e }; if (u >= 1) fly = null; }
+      ctx.clearRect(0, 0, w, h);
+      // cloud halos
+      G.C.forEach(c => { if (!c.n) return; const [x, y] = pos(c), r = (24 + Math.sqrt(c.n) * 9) * (opt.size || 1) * st.view.s; const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(158,160,240,.10)"); g.addColorStop(1, "rgba(158,160,240,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); });
+      // edges
+      ctx.lineWidth = 1;
+      G.E.forEach(([a, b]) => { const pa = G.P[a], pb = G.P[b]; let al = .1; if (st.fade) al = st.fade.has(a) && st.fade.has(b) ? .55 * Math.min(st.fade.get(a), st.fade.get(b)) : .02; else if (st.near) al = st.near.has(a) && st.near.has(b) ? .55 : .03; ctx.strokeStyle = `rgba(200,205,255,${al})`; const [x1, y1] = pos(pa), [x2, y2] = pos(pb); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); });
+      // points
+      G.P.forEach(p => {
+        const [x, y] = pos(p); if (x < -20 || y < -20 || x > w + 20 || y > h + 20) return;
+        let a = .72, r = rad(p); const age = t - p.born; let grow = 1;
+        if (age < 900) { grow = RM ? 1 : Math.min(1, age / 900); }
+        if (st.fade) a = st.fade.has(p.id) ? st.fade.get(p.id) : .07; else if (st.near) a = st.near.has(p.id) ? 1 : .12;
+        ctx.globalAlpha = a * grow; ctx.fillStyle = COL[p.k];
+        if (r > 2.2) { ctx.shadowColor = COL[p.k]; ctx.shadowBlur = 4; }
+        const rr = r * (grow < 1 ? 0.4 + grow * .6 : 1); ctx.beginPath(); if (rr >= 4 && p.k === "done") { const lw = Math.max(1.6, rr * .42); ctx.strokeStyle = COL[p.k]; ctx.lineWidth = lw; ctx.arc(x, y, rr - lw / 2, 0, 6.283); ctx.stroke(); ctx.lineWidth = 1; } else if (rr >= 4 && p.k === "tentative") { const h = rr * .86; if (ctx.roundRect) ctx.roundRect(x - h, y - h, h * 2, h * 2, rr * .35); else ctx.rect(x - h, y - h, h * 2, h * 2); ctx.fill(); } else { ctx.arc(x, y, rr, 0, 6.283); ctx.fill(); } ctx.shadowBlur = 0;
+        if (st.focus === p.id) { ctx.globalAlpha = 1; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.283); ctx.stroke(); ctx.lineWidth = 1; }
+        if (age >= 0 && age < 1600 && p.born > 0) { const u = age / 1600; ctx.globalAlpha = (1 - u) * .8; ctx.strokeStyle = COL[p.k]; ctx.beginPath(); ctx.arc(x, y, r + 4 + u * 26, 0, 6.283); ctx.stroke(); }
+      });
+      ctx.globalAlpha = 1;
+      // glints: pulse + growing line to a neighbor
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const f = fx[i], u = (t - f.t0) / f.dur; if (u >= 1) { fx.splice(i, 1); continue; }
+        const p = G.P[f.id], [x, y] = pos(p), r = rad(p);
+        ctx.globalAlpha = Math.sin(u * Math.PI) * .75; ctx.fillStyle = "#fff"; ctx.shadowColor = COL[p.k]; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(x, y, r + 3 + u * 12, 0, 6.283); ctx.stroke();
+        if (f.to != null) { const [x2, y2] = pos(G.P[f.to]), v = Math.min(1, u * 2); ctx.globalAlpha = Math.sin(u * Math.PI) * .9; ctx.strokeStyle = "rgba(220,224,255,.9)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (x2 - x) * v, y + (y2 - y) * v); ctx.stroke(); ctx.lineWidth = 1; }
+        ctx.globalAlpha = 1;
+      }
+    }
+    const nb = id => { const e = G.E.find(([a, b]) => a === id || b === id); return e ? (e[0] === id ? e[1] : e[0]) : null; };
+    const glint = (id, withLine = true, dur = 1400, to) => fx.push({ id, to: to !== undefined ? to : (withLine ? nb(id) : null), t0: performance.now(), dur });
+    const chain = (id, hops) => { const path = [id], seen = new Set([id]); for (let i = 0; i < hops; i++) { const cur = path[path.length - 1]; const nx = G.E.filter(([a, b]) => a === cur || b === cur).map(([a, b]) => a === cur ? b : a).filter(j => !seen.has(j)); if (!nx.length) break; const j = nx[Math.floor(Math.random() * nx.length)]; path.push(j); seen.add(j); } path.forEach((pid, i) => setTimeout(() => glint(pid, false, 2000, i < path.length - 1 ? path[i + 1] : null), RM ? 0 : i * 300)); return path; };
+    const hit = (mx, my) => { let best = null, bd = 1e9; G.P.forEach(p => { const [x, y] = pos(p), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = p; } }); return bd < 22 * 22 ? best : null; };
+    return { fit, draw, glint, chain, hit, st, pos, nb, flyView };
+  }
+
+
+  // Hero sky: tens of thousands of fake cards baked once into a layer; only the light and lit stars move.
+  let AGAIN = false; try { AGAIN = FRAME === null && sessionStorage.getItem("md-home-woke") === "1"; sessionStorage.setItem("md-home-woke", "1"); } catch (e) {}
+  if (AGAIN) document.documentElement.classList.add("again");
+  function Sky(canvas, baseCanvas) {
+    // Two canvases: the baked sky (drawn only on fit, never cleared by the light) and the light layer on top.
+    const ctx = canvas.getContext("2d"), bctx = baseCanvas.getContext("2d"), phone = innerWidth < 640;
+    const NUM = phone ? 9000 : 30000, NC = phone ? 36 : 64, MAXRUN = phone ? 3 : 6;
+    const P = [], adj = [], E = [], CL = [];
+    const sr = () => rnd();
+    for (let c = 0; c < NC; c++) { const arm = c % 2, t = (c / NC) * 3.2 + sr() * .35, rad = .08 + t * .14; const a = t * 2.1 + arm * Math.PI; CL.push({ x: .5 + Math.cos(a) * rad * 1.25 + (sr() - .5) * .08, y: .5 + Math.sin(a) * rad * .72 + (sr() - .5) * .06, s: .018 + sr() * .03, w: .4 + Math.pow(sr(), 2) * 2.6, ids: [] }); }
+    const wsum = CL.reduce((a, c) => a + c.w, 0);
+    CL.forEach((c, ci) => { const n = Math.round(NUM * .86 * c.w / wsum); for (let i = 0; i < n; i++) { const a = sr() * 6.283, d = Math.pow(sr(), .8) * c.s; const id = P.length; P.push({ x: c.x + Math.cos(a) * d * 1.3, y: c.y + Math.sin(a) * d, k: pickKind(), r: .5 + Math.pow(sr(), 6) * 2.4, c: ci }); adj.push([]); c.ids.push(id); } });
+    while (P.length < NUM) { P.push({ x: .5 + (sr() - .5) * 1.5, y: .5 + (sr() - .5) * 1.0, k: pickKind(), r: .4 + sr() * .5, c: -1 }); adj.push([]); }
+    CL.forEach(c => { const ids = c.ids; for (const id of ids) { const p = P[id]; let best = -1, bd = 1e9, b2 = -1, bd2 = 1e9; for (let t = 0; t < 14; t++) { const q = ids[Math.floor(sr() * ids.length)]; if (q === id) continue; const d = (P[q].x - p.x) ** 2 + (P[q].y - p.y) ** 2; if (d < bd) { b2 = best; bd2 = bd; best = q; bd = d; } else if (d < bd2) { b2 = q; bd2 = d; } } [best, b2].forEach((q, k) => { if (q >= 0 && (k === 0 || sr() < .5) && !adj[id].includes(q)) { adj[id].push(q); adj[q].push(id); E.push([id, q]); } }); } });
+    let w = 0, h = 0, dpr = 1, S = 1, probe = null; 
+    const pos = p => [w / 2 + (p.x - .5) * S, h / 2 + (p.y - .5) * S * .9];
+    function size(cv, c, d) { d = d || dpr; cv.width = Math.round(w * d); cv.height = Math.round(h * d); c.setTransform(d, 0, 0, d, 0, 0); }
+    function bake() {
+      dpr = Math.min(2, devicePixelRatio || 1); w = canvas.clientWidth; h = canvas.clientHeight; if (!w || !h) return;
+      size(canvas, ctx, 1); size(baseCanvas, bctx); S = Math.max(w / 1.05, h / .82);
+      const L = bctx; L.clearRect(0, 0, w, h);
+      CL.forEach(c => { const [x, y] = pos(c), r = c.s * S * 2.2; const g = L.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(158,160,240,.13)"); g.addColorStop(1, "rgba(158,160,240,0)"); L.fillStyle = g; L.beginPath(); L.arc(x, y, r, 0, 6.283); L.fill(); });
+      L.strokeStyle = "rgba(200,205,255,.045)"; L.lineWidth = .6; L.beginPath(); E.forEach(([a, b]) => { const [x1, y1] = pos(P[a]), [x2, y2] = pos(P[b]); L.moveTo(x1, y1); L.lineTo(x2, y2); }); L.stroke();
+      KINDS.forEach(k => { L.fillStyle = COL[k]; L.globalAlpha = .55; L.beginPath(); P.forEach(p => { if (p.k !== k) return; const [x, y] = pos(p); if (x < -4 || y < -4 || x > w + 4 || y > h + 4) return; if (p.r < 1.1) L.rect(x, y, p.r * 1.3, p.r * 1.3); else { L.moveTo(x + p.r, y); L.arc(x, y, p.r, 0, 6.283); } }); L.fill(); });
+      L.globalAlpha = 1;
+      // probe: the brightest cloud center, used to notice if the browser dropped the baked layer
+      const big = CL.reduce((a, c) => c.w > a.w ? c : a, CL[0]); const [px, py] = pos(big); probe = [Math.round(px * dpr), Math.round(py * dpr)];
+    }
+    let bakeT = 0; const fit = () => { clearTimeout(bakeT); bakeT = setTimeout(bake, 120); };
+    bake();
+    // the light layer is cleared every frame; the baked layer is untouched. Re-bake if the page comes back or the layer went blank.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) bake(); });
+    baseCanvas.addEventListener("contextrestored", bake); canvas.addEventListener("contextrestored", bake);
+    setInterval(() => { if (document.hidden || !probe) return; try { const d = bctx.getImageData(probe[0], probe[1], 1, 1).data; if (d[3] === 0) bake(); } catch (e) { bake(); } }, 5000);
+
+    // Neural light (owner 2026-11-14 20:37): wake from the center, then branching signals, cloud flashes and long jumps.
+    // Calm is the decided strength (owner 2026-11-14 21:34). Busy / storm values are kept only as a record in BUILD.md.
+    const L = { seed: 45, depth: 3, flash: .02, jumpEvery: [12000, 16000], jumpMax: 1, cap: .27, step: 320 };
+    const MAXSIG_FULL = phone ? 50 : 150, MAXSIG = () => Math.round(MAXSIG_FULL * L.cap), sig = [], trail = [], lit = new Map(), flashes = []; let nextSeed = 0, wakeT0 = -1, lastFlash = [];
+    const centerId = (() => { let best = 0, bd = 9; P.forEach((p, i) => { if (p.c < 0) return; const d = (p.x - .5) ** 2 + (p.y - .5) ** 2; if (d < bd) { bd = d; best = i; } }); return best; })();
+    let avoid = [];
+    const zones = () => { const c = canvas.getBoundingClientRect(); avoid = ["#hh", ".hero .cta", ".hero .sub"].map(q => document.querySelector(q)).filter(Boolean).map(e => { const r = e.getBoundingClientRect(); return [r.left - c.left - 24, r.top - c.top - 24, r.right - c.left + 24, r.bottom - c.top + 24]; }); };
+    const inAvoid = (x, y) => avoid.some(z => x > z[0] && x < z[2] && y > z[1] && y < z[3]);
+    const send = (a, b, depth, seen, ms, long, step) => { if (!long && sig.length >= MAXSIG()) return; sig.push({ a, b, t0: performance.now(), ms: ms || L.step, depth, seen, long: !!long, step: step || ms || L.step }); };
+    const pickW = W => { let r = Math.random(), acc = 0; for (const [v, w] of W) { acc += w; if (r < acc) return v; } return W[W.length - 1][0]; };
+    const DEPTH = [[1, .5], [2, .32], [3, .18]], BRANCH = [[0, .12], [1, .43], [2, .3], [3, .15]];
+    function light(id, now, hold) { lit.set(id, { t0: now, h: hold || 2000 }); }
+    function arrive(g, now) {
+      light(g.b, now); if (g.depth <= 0) return;
+      const nx = adj[g.b].filter(j => !g.seen.has(j)); if (!nx.length) return;
+      const n = Math.min(nx.length, g.first ? Math.max(1, pickW(BRANCH)) : g.wake ? 2 + Math.floor(Math.random() * 2) : pickW(BRANCH));
+      const st = g.step || L.step;
+      for (let k = 0; k < n; k++) { const j = nx.splice(Math.floor(Math.random() * nx.length), 1)[0]; const [x, y] = pos(P[j]); if (inAvoid(x, y) && Math.random() < .8) continue; g.seen.add(j); send(g.b, j, g.depth - 1, g.seen, st * (.9 + Math.random() * .2), false, st); if (g.wake) sig[sig.length - 1].wake = true; }
+    }
+    let nextJump = 0;
+    const crosses = (x1, y1, x2, y2) => { for (let t = 0; t <= 1; t += 1 / 16) if (inAvoid(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)) return true; return false; };
+    function jump(now) {
+      if (now < nextJump) return; nextJump = now + L.jumpEvery[0] + Math.random() * (L.jumpEvery[1] - L.jumpEvery[0]);
+      if (sig.filter(g => g.long).length >= L.jumpMax) return;
+      for (let tries = 0; tries < 20; tries++) {
+        const a = CL[Math.floor(Math.random() * CL.length)], b = CL[Math.floor(Math.random() * CL.length)]; if (a === b || !a.ids.length || !b.ids.length) continue;
+        const s0 = a.ids[Math.floor(Math.random() * a.ids.length)], t0 = b.ids[Math.floor(Math.random() * b.ids.length)];
+        const [x1, y1] = pos(P[s0]), [x2, y2] = pos(P[t0]); if (Math.hypot(x2 - x1, y2 - y1) > w * .45 || crosses(x1, y1, x2, y2)) continue;
+        light(s0, now); send(s0, t0, 2, new Set([s0, t0]), 650, true); return;
+      }
+    }
+    function seed(now) {
+      for (let tries = 0; tries < 12; tries++) { const c = CL[Math.floor(Math.random() * CL.length)]; if (!c.ids.length) continue; const id = c.ids[Math.floor(Math.random() * c.ids.length)]; const [x, y] = pos(P[id]); if (x < 0 || x > w || y < 0 || y > h) continue; if (inAvoid(x, y) && Math.random() < .9) continue; light(id, now); arrive({ b: id, depth: pickW(DEPTH), seen: new Set([id]), first: true, step: 160 + Math.random() * 160 }, now); return; }
+    }
+    function flash(now) { lastFlash = lastFlash.filter(t => now - t < 1000); if (lastFlash.length >= 3) return; lastFlash.push(now); const ci = Math.floor(Math.random() * CL.length); if (!CL[ci].ids.length) return; flashes.push({ c: ci, t0: now }); const ids = CL[ci].ids; for (let k = 0; k < Math.min(26, ids.length); k++) light(ids[Math.floor(Math.random() * ids.length)], now + Math.random() * 260, 600 + Math.random() * 400); }
+    function wake(now) { wakeT0 = now - (AGAIN ? 1400 : 0); zones(); const s0 = new Set([centerId]); light(centerId, now); const nx = adj[centerId]; nx.forEach(j => { s0.add(j); send(centerId, j, AGAIN ? 4 : 7, s0, 200, false, 200); sig[sig.length - 1].wake = true; }); if (AGAIN) return; CL.forEach((c, ci) => { const d = Math.hypot(c.x - .5, c.y - .5), t = now + 250 + d * 2600; flashes.push({ c: ci, t0: t, soft: true }); for (let k = 0; k < Math.min(22, c.ids.length); k++) light(c.ids[Math.floor(Math.random() * c.ids.length)], t + Math.random() * 220, 380 + Math.random() * 120); }); }
+    function star(x, y, k, a, r) { ctx.globalAlpha = a * .35; ctx.fillStyle = COL[k]; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, 6.283); ctx.fill(); ctx.globalAlpha = a; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); }
+    let idle = false, still = false;
+    // Decision 18 A (owner 2026-11-16 11:53 · home BUILD 4-1): the first visit opens with the first star — 24 motes gather from
+    // 150 px into the center star over 1.4 s, a white bloom 36 → 60 and a ring 6 → 96 px in the last 0.3 s, all gone at 1.4 s.
+    // Drawn on the light layer only (the baked layer is never touched); then wake() runs exactly as before, 1.4 s later.
+    const GATHER = 1400; let born = -1; const gr = (() => { let g = 3; return () => (g = (g * 16807) % 2147483647) / 2147483647; })();
+    const motes = Array.from({ length: 24 }, () => ({ a: gr() * 6.283, d: .7 + .3 * gr(), lag: gr() * .25, spin: (gr() - .5) * 1.4 }));
+    function gather(el) {
+      const u = el / GATHER, [cx, cy] = pos(P[centerId]), col = COL[P[centerId].k];
+      ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = "lighter";
+      motes.forEach(m => { const v = Math.min(1, Math.max(0, (u - m.lag) / (1 - m.lag))), e = v * v * v, r = 150 * m.d * (1 - e), a = m.a + m.spin * e;
+        const al = Math.min(1, v / .2) * (u > .93 ? (1 - u) / .07 : 1); if (al <= 0) return;
+        ctx.globalAlpha = al * .9; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.6, 0, 6.283); ctx.fill(); });
+      if (u > 11 / 14) { const k = (u - 11 / 14) / (3 / 14), fade = 1 - k;
+        const br = 36 + 24 * k, g = ctx.createRadialGradient(cx, cy, 0, cx, cy, br); g.addColorStop(0, `rgba(255,255,255,${.5 * fade})`); g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, br, 0, 6.283); ctx.fill();
+        ctx.globalAlpha = .6 * fade; ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, 6 + 90 * k, 0, 6.283); ctx.stroke(); }
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    }
+    function draw(now) {
+      if (!w) return;
+      if (wakeT0 < 0 && !AGAIN && !RM && !OPEN_OLD) { if (born < 0) born = now; if (now - born < GATHER) { gather(now - born); return; } }
+      if (wakeT0 < 0) wake(now);
+      if (RM) { if (still) return; still = true; ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = "lighter"; ctx.strokeStyle = "rgba(200,205,255,.35)"; ctx.lineWidth = 1; const seen = new Set([centerId]); let q = [centerId]; for (let d = 0; d < 4; d++) { const nq = []; q.forEach(a => adj[a].slice(0, 3).forEach(b => { if (seen.has(b)) return; seen.add(b); nq.push(b); const [x1, y1] = pos(P[a]), [x2, y2] = pos(P[b]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); })); q = nq; } seen.forEach(id => { const [x, y] = pos(P[id]); star(x, y, P[id].k, .9, 1.8); }); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; return; }
+      if (now - wakeT0 > 1800) { let guard = 0; while (now > nextSeed && guard++ < 4) { seed(now); nextSeed += L.seed * (.3 + -Math.log(1 - Math.random())); } if (now > nextSeed) nextSeed = now; if (Math.random() < .006) for (let k = 0; k < 3; k++) seed(now); jump(now); if (Math.random() < L.flash * .033 * 2) flash(now); }
+      for (let k = sig.length - 1; k >= 0; k--) { const g = sig[k]; if (now - g.t0 >= g.ms) { sig.splice(k, 1); trail.push({ a: g.a, b: g.b, t0: now, long: g.long }); arrive(g, now); } }
+      if (trail.length > 600) trail.splice(0, trail.length - 600);
+      if (!sig.length && !trail.length && !lit.size && !flashes.length) { if (!idle) { ctx.clearRect(0, 0, w, h); idle = true; } return; }
+      idle = false; ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = "lighter";
+      for (let k = flashes.length - 1; k >= 0; k--) { const f = flashes[k], age = now - f.t0; if (age < 0) continue; const D = f.soft ? 400 : 500; if (age > D) { flashes.splice(k, 1); continue; } const c = CL[f.c], [x, y] = pos(c), r = c.s * S * 1.3, a = Math.sin(age / D * Math.PI) * (f.soft ? .07 : .1); const gr = ctx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(190,192,255,${a})`); gr.addColorStop(1, "rgba(190,192,255,0)"); ctx.fillStyle = gr; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); }
+      ctx.lineWidth = 1.1;
+      for (let k = trail.length - 1; k >= 0; k--) { const t = trail[k], age = now - t.t0, life = t.long ? 450 : 1200; if (age > life) { trail.splice(k, 1); continue; } const [x1, y1] = pos(P[t.a]), [x2, y2] = pos(P[t.b]); ctx.lineWidth = t.long ? .7 : 1.1; ctx.globalAlpha = (1 - age / life) * (t.long ? .3 : .55); ctx.strokeStyle = t.long ? "#c9c6ff" : "#dfe2ff"; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+      ctx.lineWidth = 1.6;
+      sig.forEach(g => { const u = Math.min(1, (now - g.t0) / g.ms), e = u * u * (3 - 2 * u); const [x1, y1] = pos(P[g.a]), [x2, y2] = pos(P[g.b]); const hx = x1 + (x2 - x1) * e, hy = y1 + (y2 - y1) * e; ctx.lineWidth = g.long ? .8 : 1.6; ctx.globalAlpha = g.long ? .7 : .9; ctx.strokeStyle = g.long ? "#b9b6ff" : "#ffffff"; ctx.beginPath(); ctx.moveTo(x1 + (x2 - x1) * Math.max(0, e - .35), y1 + (y2 - y1) * Math.max(0, e - .35)); ctx.lineTo(hx, hy); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(hx, hy, 1.6, 0, 6.283); ctx.fill(); });
+      lit.forEach((v, id) => { const age = now - v.t0; if (age < 0) return; if (age > v.h) { lit.delete(id); return; } const a = age < 100 ? age / 100 : 1 - (age - 100) / (v.h - 100); const [x, y] = pos(P[id]); star(x, y, P[id].k, a * .9, 1.6 + (1 - Math.min(1, age / 500)) * 1.6); });
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    }
+    addEventListener("resize", () => setTimeout(zones, 200));
+    return { fit, draw, n: NUM, nc: NC };
+  }
+
+  // ---------- hero ----------
+  const hero = Sky($("#sky"), $("#skybase"));
+  $("#liveline").textContent = `보기용 가짜 데이터 · 카드 ${hero.n.toLocaleString()}장 · 구름 ${hero.nc}개`;
+
+  // ---------- moment ----------
+  const MG = makeGalaxy(6, 18, .07);
+  const mini = Painter($("#minimap"), MG, { fitW: .82, fitH: .74, size: 1.2 });
+  const A1 = MG.P.find(p => p.k === "decision").id, A2 = MG.P.filter(p => p.k === "decision")[1].id;
+  const SCRIPT = [
+    { at: 0, st: 0, add: '<span class="dim">바다상회 ~/shop $</span> claude\n\n<span class="me">&gt; 환불 기한을 14일로 늘려도 돼?</span>\n' },
+    { at: 1500, st: 1, add: '<span class="att">기억 2장이 붙었어요</span>\n\n', fx: () => { mini.chain(A1, 2); setTimeout(() => mini.chain(A2, 1), 250); $("#mcap").innerHTML = "<b>별 둘 반짝 → 선을 따라</b> 붙은 카드에서 이어진 카드로"; } },
+    { at: 3300, st: 2, type: "11/12에 7일로 정하셨어요 — 까닭은 반품 물류비였어요.\n포장을 뜯은 건 교환만 받기로 한 것도 그대로예요.\n가을 행사 동안만 14일로 열어 둘까요?\n\n" },
+    { at: 6900, st: 3, add: '<span class="card">⏺ Memory Device · card_add — 결정 「환불 14일은 가을 행사 동안만」</span>\n<span class="ok">  카드 1장을 썼어요</span>', fx: () => { const base = MG.P[A1]; MG.P.push({ id: MG.P.length, c: base.c, x: base.x + .05, y: base.y - .04, k: "decision", att: 6, born: performance.now(), title: "환불 14일은 가을 행사 동안만" }); MG.C[base.c].n++; MG.E.push([A1, MG.P.length - 1]); mini.glint(MG.P.length - 1, true, 1800); $("#mcap").innerHTML = "<b>새 별 하나</b> 결정 카드가 지도에 들어왔어요"; } },
+  ];
+  let mT0 = 0, mPaused = false, mPauseAt = 0, mIdx = 0, typed = "", typeTarget = "", typeFrom = 0, html = "";
+  const tty = $("#tty");
+  function mReset() { MG.P.length = MG.P.filter(p => p.born < 0).length; MG.E = MG.E.filter(([a, b]) => a < MG.P.length && b < MG.P.length); mIdx = 0; html = ""; typeTarget = ""; typed = ""; mT0 = performance.now(); mPaused = false; $("#mpause").textContent = "❚❚ 멈춤"; $("#mcap").innerHTML = "<b>지도</b> 바다상회의 기억 " + MG.P.length + "장"; setStep(-1); }
+  function setStep(i) { document.querySelectorAll(".step").forEach(s => s.classList.toggle("on", +s.dataset.st === i)); }
+  function mTick(now) {
+    if (mPaused) return; const t = now - mT0;
+    while (mIdx < SCRIPT.length && t >= SCRIPT[mIdx].at) { const s = SCRIPT[mIdx++]; setStep(s.st); if (typeTarget) { html += typeTarget; typeTarget = ""; } if (s.add) html += s.add; if (s.type) { typeTarget = s.type; typeFrom = now; } if (s.fx) s.fx(); }
+    let out = html; if (typeTarget) { const n = Math.min(typeTarget.length, Math.floor((now - typeFrom) / 28)); out += typeTarget.slice(0, n); if (n >= typeTarget.length) { html += typeTarget; typeTarget = ""; out = html; } }
+    tty.innerHTML = out + '<span class="caret"></span>';
+    if (t > 12500) mReset();
+  }
+  $("#mpause").onclick = () => { mPaused = !mPaused; if (mPaused) mPauseAt = performance.now(); else mT0 += performance.now() - mPauseAt; $("#mpause").textContent = mPaused ? "▶ 이어 보기" : "❚❚ 멈춤"; };
+  $("#mreplay").onclick = () => mReset();
+  if (RM) { $("#mom").parentElement.classList.add("rm"); html = SCRIPT.map(s => s.add || s.type).join(""); tty.innerHTML = html; mPaused = true; $("#mpause").hidden = true; $("#mreplay").hidden = true; setStep(3); }
+
+  // ---------- roles ----------
+  const d = k => `<span class="d" style="background:${COL[k]}"></span>`;
+  const SCENES = {
+    dev: { h: "새 세션 첫 말에, 지난주 결정이 붙어 옵니다", p: "대화가 접히거나 세션을 새로 열어도 「왜 이렇게 짰더라」를 다시 설명하지 않아요. 맞는 카드가 말마다 저절로 붙어요.", shot: `<div class="shot"><h4>개발 자리 · 새 세션</h4><div class="t"><span style="color:#fff">&gt; 결제 모듈 리팩터링 시작하자</span>\n<span style="color:var(--color-brand)">기억 2장이 붙었어요 · 이어진 카드 1</span>\n\n지난주에 한 곳으로 모으기로 하셨죠. 할부 3개월 제한은\nPG 계약 때문이라 그대로 두고 시작할게요.</div></div>` },
+    pm: { h: "정한 것 · 열린 것이 한 화면에", p: "누가 · 언제 · 왜 정했는지 채팅을 뒤지지 않아요. 오늘 생긴 결정과 오래 열려 있는 할 일이 모여요.", shot: `<div class="shot"><h4>오늘 · PM 자리</h4><div class="crow">${d("decision")}<span class="tt">환불 14일은 가을 행사 동안만</span><span class="m">오늘 · 개발 자리</span></div><div class="crow">${d("decision")}<span class="tt">모바일 첫 화면은 기획전 하나만</span><span class="m">오늘 · 디자인 자리</span></div><div class="crow">${d("todo")}<span class="tt">고객센터 번호 바꿈 공지</span><span class="chip">아직 열려 있나요?</span></div><div class="crow">${d("blocker")}<span class="tt">택배사 바꾸기 — 계약이 11/30에 끝남</span><span class="m">14일째</span></div></div>` },
+    ds: { h: "시안에서 정한 규칙이, 구현하는 에이전트에게 건너갑니다", p: "디자인 자리가 남긴 결정이 공유 카드가 되어, 개발 자리의 말에 붙어요.", shot: `<div class="shot"><div class="seats2"><div class="seat"><b>디자인 자리 · 씀</b>${d("decision")} 상세 사진은 4장으로, 첫 장은 흰 바탕</div><span class="arrow" aria-hidden="true">→</span><div class="seat"><b>개발 자리 · 붙음</b><span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-2)">&gt; 상품 상세 갤러리 만들어 줘\n</span><br>사진은 4장, 첫 장 흰 바탕으로 맞출게요.</div></div></div>` },
+    etc: { h: "에이전트마다 따로였던 기억이, 한 지도에", p: "운영 · 재무 · 혼자 일하는 사람도. 자리마다 격리는 그대로, 열어 준 카드만 함께 봐요.", shot: `<div class="shot"><h4>바다상회 · 자리 다섯</h4>${SEATS.map((s, i) => `<div class="crow">${d(KINDS[i])}<span class="tt">${s}</span><span class="m">카드 ${[184, 92, 61, 48, 27][i]}장</span></div>`).join("")}</div>` },
+  };
+  function role(k) { const s = SCENES[k]; $("#scene").innerHTML = `<div><h3>${s.h}</h3><p>${s.p}</p></div>${s.shot}`; $("#scene").setAttribute("aria-labelledby", "t-" + k); document.querySelectorAll("[data-r]").forEach(b => { const on = b.dataset.r === k; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }); }
+  const tabs = [...document.querySelectorAll("[data-r]")];
+  tabs.forEach((b, i) => { b.onclick = () => role(b.dataset.r); b.onkeydown = e => { const j = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length : -1; if (j >= 0) { e.preventDefault(); tabs[j].focus(); role(tabs[j].dataset.r); } }; });
+  role("pm"); // owner 2026-11-16 12:14 「PM이 앞에 나와야하지?」 — PM first and picked first
+
+
+  // ---------- team memory ----------
+  (function team() {
+    const st = $("#stage"), svg = $("#tlinks"), card = $("#tcard"), at = n => st.querySelector(`[data-n="${n}"]`);
+    const xy = n => { const r = st.getBoundingClientRect(), e = at(n).querySelector(".orb").getBoundingClientRect(); return [e.left + e.width / 2 - r.left, e.top + e.height / 2 - r.top]; };
+    const lines = () => { const [tx, ty] = xy("team"); svg.innerHTML = ["plan", "design", "dev"].map(n => { const [x, y] = xy(n); return `<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="rgba(200,205,255,.18)" stroke-width="1.5" stroke-dasharray="4 6"/>`; }).join("") + `<line id="hot" x1="0" y1="0" x2="0" y2="0" stroke="rgba(255,255,255,.85)" stroke-width="2"/>`; };
+    const put = (n, dy = -46) => { const [x, y] = xy(n); card.style.left = x + "px"; card.style.top = (y + dy) + "px"; };
+    const hot = (a, b) => { const h = svg.querySelector("#hot"); if (!h) return; if (!a) { h.setAttribute("x2", h.getAttribute("x1")); h.setAttribute("y2", h.getAttribute("y1")); return; } const [x1, y1] = xy(a), [x2, y2] = xy(b); h.setAttribute("x1", x1); h.setAttribute("y1", y1); h.setAttribute("x2", x2); h.setAttribute("y2", y2); };
+    const step = i => document.querySelectorAll("[data-ts]").forEach(e => e.classList.toggle("on", +e.dataset.ts === i));
+    let timers = [];
+    const T = (ms, f) => timers.push(setTimeout(f, ms));
+    function play() {
+      timers.forEach(clearTimeout); timers = []; lines();
+      $("#say1").classList.remove("on"); $("#say2").classList.remove("on"); card.classList.remove("on"); hot(); $("#teamn").textContent = "함께 붙는 카드 163장"; step(-1);
+      if (RM) { put("team", 0); card.classList.add("on"); $("#say1").classList.add("on"); $("#say2").classList.add("on"); $("#teamn").textContent = "함께 붙는 카드 164장"; step(2); return; }
+      T(300, () => { step(0); $("#say1").classList.add("on"); card.style.transition = "none"; put("design"); requestAnimationFrame(() => { card.style.transition = ""; card.classList.add("on"); }); });
+      T(2000, () => { step(1); hot("design", "team"); put("team", 0); });
+      T(3000, () => { $("#teamn").textContent = "함께 붙는 카드 164장"; hot(); });
+      T(4200, () => { step(2); $("#say2").classList.add("on"); hot("team", "dev"); put("dev"); });
+      T(5400, () => hot());
+      T(8200, play);
+    }
+    let tPaused = false; $("#tpause").onclick = () => { tPaused = !tPaused; $("#tpause").textContent = tPaused ? "▶ 이어 보기" : "❚❚ 멈춤"; if (tPaused) timers.forEach(clearTimeout); else play(); }; $("#treplay").onclick = () => { tPaused = false; $("#tpause").textContent = "❚❚ 멈춤"; play(); };
+    if (RM) { $("#tpause").hidden = true; $("#treplay").hidden = true; }
+    const io2 = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && !tPaused) play(); else timers.forEach(clearTimeout); }), { threshold: .3 });
+    io2.observe(st); addEventListener("resize", () => lines());
+    const EYE = { plan: ["설계", 214], dev: ["개발", 388], design: ["디자인", 96] };
+    document.querySelectorAll("[data-eye]").forEach(b => b.onclick = () => { const k = b.dataset.eye, [nm, n] = EYE[k], others = Object.keys(EYE).filter(o => o !== k).map(o => EYE[o][0]).join(" · ");
+      document.querySelectorAll("[data-eye]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      st.querySelectorAll("[data-n]").forEach(nd => nd.classList.toggle("dim", nd.dataset.n !== k && nd.dataset.n !== "team"));
+      $("#eyetxt").textContent = `${nm} 자리의 눈 — 자기 기억 ${n}장 + 팀 기억 163장이 붙어요. ${others} 자리의 대화 원문은 🔒 안 보여요.`; });
+  })();
+
+  // ---------- growth count-up ----------
+  (function () { const els = [...document.querySelectorAll(".gnums b")]; if (RM) return; els.forEach(e => e.textContent = "0");
+    const io3 = new IntersectionObserver(es => { if (!es.some(e => e.isIntersecting)) return; io3.disconnect(); const t0 = performance.now(), D = 1600;
+      const step = now => { const u = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - u, 3); els.forEach(el => el.textContent = Math.round(+el.dataset.to * e).toLocaleString()); if (u < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }, { threshold: .4 });
+    io3.observe(document.querySelector(".grow")); })();
+
+  // ---------- demo ----------
+  const DG = makeGalaxy(9, 16, .075);
+  const demo = Painter($("#demomap"), DG, { fitW: 1.05, fitH: .85, size: 1.35 });
+  let last = { id: null, t: 0 }, later = 0;
+  const near = id => { const s = new Set([id]); DG.E.forEach(([a, b]) => { if (a === id) s.add(b); if (b === id) s.add(a); }); return s; };
+  const card = p => { $("#dck").innerHTML = `<span class="d" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${COL[p.k]}"></span>${KN[p.k]} · ${p.seat || "공유 앱"}`; $("#dct").textContent = p.title; $("#dcd").innerHTML = `<dt>붙임</dt><dd>${p.att}번</dd><dt>이어진</dt><dd>${near(p.id).size - 1}장</dd><dt>출처</dt><dd>대화 한 줄(가짜)</dd>`; $("#dcard").classList.add("on"); };
+  const closeCard = () => { $("#dcard").classList.remove("on"); };
+  const FADE = [1, 1, .65, .4], FAR = .22;
+  const fadeOf = id => { const m = new Map([[id, 1]]); let q = [id], d = 0; while (q.length) { d++; const nx = []; q.forEach(a => DG.E.forEach(([x, y]) => { const o = x === a ? y : y === a ? x : null; if (o != null && !m.has(o)) { m.set(o, d < FADE.length ? FADE[d] : FAR); nx.push(o); } })); q = nx; } return m; };
+  function press(p) { const now = performance.now(), dbl = last.id === p.id && now - last.t < 350; last = dbl ? { id: null, t: 0 } : { id: p.id, t: now }; demo.st.focus = p.id; demo.st.near = near(p.id); demo.st.fade = fadeOf(p.id); demo.glint(p.id, false, 900); const k = dbl ? 9 : Math.max(demo.st.view.s, 2.4); demo.flyView({ s: k, x: p.x - .5, y: p.y - .5 }, dbl ? 700 : 500); if (dbl) { card(p); $("#dhint").textContent = "전문이에요 · 빈 곳을 누르면 처음으로"; } else { closeCard(); $("#dhint").textContent = `이어진 카드 ${demo.st.fade.size - 1}장만 남겼어요(가까울수록 진하게) · 한 번 더 누르면 끝까지 당겨 전문`; } }
+  const clear = () => { demo.st.focus = null; demo.st.near = null; demo.st.fade = null; demo.flyView({ s: 1, x: 0, y: 0 }, 500); closeCard(); $("#dhint").textContent = "별을 한 번 누르면 그쪽으로 다가가 이어진 카드만 · 두 번 누르면 끝까지 당겨 전문"; };
+  $("#demomap").addEventListener("click", e => { const r = e.currentTarget.getBoundingClientRect(), p = demo.hit(e.clientX - r.left, e.clientY - r.top); p ? press(p) : clear(); });
+  $("#dpick").onclick = () => { const cand = DG.P.filter(p => near(p.id).size > 2); press(cand[Math.floor(Math.random() * cand.length)] || DG.P[0]); };
+  $("#dclose").onclick = clear;
+  $("#dlater").onclick = () => { clear(); later++; const n = DG.P.length, now = performance.now(); const cc = { x: .5 + (later % 2 ? .3 : -.3), y: .5 + (later % 2 ? -.18 : .2), n: 0 }; DG.C.push(cc); DG.add(cc, DG.C.length - 1, Math.round(n * .35), .08); for (let i = 0; i < Math.round(n * .65); i++) { const b = DG.P[Math.floor(rnd() * n)]; DG.P.push({ id: DG.P.length, c: b.c, x: b.x + (rnd() - .5) * .06, y: b.y + (rnd() - .5) * .05, k: pickKind(), att: Math.floor(rnd() * 6), born: 0, title: TITLES[DG.P.length % TITLES.length], seat: SEATS[Math.floor(rnd() * SEATS.length)] }); DG.C[b.c].n++; } for (let i = n; i < DG.P.length; i++) { DG.P[i].born = now + (RM ? -1e4 : (i - n) * 4); const q = DG.P.find(o => o.c === DG.P[i].c && o.id !== i && o.id < i); if (q && rnd() < .5) DG.E.push([q.id, i]); } $("#dcount").textContent = `${later * 3}일 뒤 · 카드 ${DG.P.length}장 · 구름 ${DG.C.length}개`; $("#dhint").textContent = "지도를 다시 그립니다 · 카드가 두 배가 됐어요 — 새 구름이 생겼어요"; if (later >= 3) { $("#dlater").textContent = "처음으로 ↺"; $("#dlater").onclick = () => location.reload(); } };
+  $("#dcount").textContent = `오늘 · 카드 ${DG.P.length}장 · 구름 ${DG.C.length}개`;
+
+  // ---------- loop ----------
+  const all = [hero, mini, demo]; const fitAll = () => all.forEach(p => p.fit()); fitAll(); addEventListener("resize", fitAll);
+  const vis = new Map(); const io = new IntersectionObserver(es => es.forEach(e => vis.set(e.target, e.isIntersecting)), { rootMargin: "100px" });
+  ["#sky", "#minimap", "#demomap"].forEach(s => { io.observe($(s)); vis.set($(s), true); });
+  // 30fps; nothing runs while the tab is hidden or a canvas is off screen; the demo map redraws only after a touch
+  let heroPaused = false; $("#hpause").onclick = () => { heroPaused = !heroPaused; $("#hpause").setAttribute("aria-pressed", String(heroPaused)); $("#hpause").textContent = heroPaused ? "▶ 움직임 다시" : "❚❚ 움직임 멈춤"; };
+  if (RM) $("#hpause").hidden = true;
+  let lastF = 0, running = false, demoUntil = performance.now() + 1500;
+  ["#demomap", "#dpick", "#dlater", "#dclose"].forEach(q => $(q).addEventListener("click", () => { demoUntil = performance.now() + 4500; }));
+  function frame(now) {
+    if (document.hidden) { running = false; return; }
+    requestAnimationFrame(frame);
+    if (now - lastF < 32) return; lastF = now;
+    if (vis.get($("#sky")) && !heroPaused) hero.draw(now);
+    if (vis.get($("#minimap"))) { mTick(now); mini.draw(now); }
+    if (vis.get($("#demomap")) && now < demoUntil) demo.draw(now);
+  }
+  const start = () => { if (running || RM) return; running = true; requestAnimationFrame(frame); };
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { demoUntil = performance.now() + 800; start(); } });
+  io.disconnect(); const io4 = new IntersectionObserver(es => es.forEach(e => { vis.set(e.target, e.isIntersecting); if (e.isIntersecting && e.target.id === "demomap") demoUntil = performance.now() + 800; }), { rootMargin: "100px" });
+  ["#sky", "#minimap", "#demomap"].forEach(q => io4.observe($(q)));
+  if (RM) { const still = () => { hero.draw(performance.now()); mini.draw(performance.now()); demo.draw(performance.now()); }; still(); ["#demomap", "#dpick", "#dlater", "#dclose"].forEach(s => $(s).addEventListener("click", () => requestAnimationFrame(still))); addEventListener("resize", () => requestAnimationFrame(still)); }
+  // (after the first re-bake: resizing a canvas clears it, so the moment is drawn once layout has settled)
+  else if (FRAME !== null) setTimeout(() => { let ms = 1; Math.random = () => (ms = (ms * 16807) % 2147483647) / 2147483647; /* reseeded here: other parts of the page draw random numbers on their own timers */ const t0 = performance.now(), T = +FRAME, at = [0, ...(!OPEN_OLD && T > 1400 ? [1400] : []), ...(T > 0 ? [T] : [])]; const real = performance.now.bind(performance); let fake = null; performance.now = () => fake ?? real(); /* send() stamps signals with performance.now(): keep it on the drawn moment */ at.forEach(ms => { fake = t0 + ms; hero.draw(fake); }); document.documentElement.dataset.frameDone = "1"; }, 600);
+  else { mReset(); start(); }
+})();
+</script>
+</body>
+</html>
