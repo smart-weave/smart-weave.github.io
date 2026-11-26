@@ -87,6 +87,9 @@
   .app h2.with-mark { display: flex; align-items: center; gap: 12px; }
   .app h2 .mark { flex: 0 0 auto; border-radius: 10px; box-shadow: 0 6px 16px -8px rgba(61, 63, 140, .55); }
   .app p { margin: 0; color: var(--muted); }
+  .app h2 .en { font-family: var(--sans, inherit); font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .88rem; color: var(--muted); }
+  .timeline time { color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 6px; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 6px; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
@@ -164,6 +167,19 @@
         <div class="row">
           <a class="btn" href="https://aibuddy.kr/">열기 →</a>
           <span class="age">만 19세 이상 이용 가능</span>
+        </div>
+      </section>
+      <section class="app wide" aria-labelledby="hub-title">
+        <span class="tag">AI 에이전트 연결</span>
+        <h2 id="hub-title">메시지 허브 <span class="en">Message Hub</span></h2>
+        <p>세션 · 기계 · 에이전트의 경계를 넘어 일이 끊기지 않게 잇는 메시지 길입니다. 받은 말은 사람의 지시가 아니라 다른 자리의 말로 구분되어 들어오고, 건넴 · 받음 · 읽음이 남습니다.</p>
+        <ul class="timeline" aria-label="메시지 허브 준비 기록">
+          <li><time datetime="2026-11-16">2026-11-16</time> 설계 시작</li>
+          <li><time datetime="2026-11-17">2026-11-17</time> 첫 코드</li>
+          <li><time datetime="2026-11-19">2026-11-19</time>부터 사내에서 날마다 사용 중</li>
+        </ul>
+        <div class="row">
+          <span class="age">준비 중</span>
         </div>
       </section>
     </div>
